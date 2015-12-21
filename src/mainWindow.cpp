@@ -137,12 +137,9 @@ MainWindow *MainWindow::openFile(const char *fileName)
     str.append(fileName);
     mw->setWindowTitle(str);
     
-    //QScrollArea *sv = new QScrollArea(mw);
-    //QWidget *sv = new QWidget(mw);
     QWidget *grid = new QWidget(mw);
     QGridLayout *gridLayout = new QGridLayout();
     grid->setLayout(gridLayout);
-    //sv->setWidget(grid);
     
     QLabel *l = new QLabel("driver", grid);
     gridLayout->addWidget(l, 0, 0);
@@ -226,7 +223,11 @@ MainWindow *MainWindow::openFile(const char *fileName)
 	}
     }
     
-    mw->setCentralWidget(grid);
+    QScrollArea *sv = new QScrollArea(mw);
+    sv->setWidget(grid);
+    sv->setBackgroundRole(QPalette::Light);
+    sv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+    mw->setCentralWidget(sv);
     mw->setVisible(true);
     return mw;
 }
