@@ -17,7 +17,7 @@
 
  */
 
-#include "previewSettings.h"
+#include "v4l2ucp/previewSettings.h"
 #include <QMessageBox>
 #include <QSettings>
 

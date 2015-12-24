@@ -18,7 +18,7 @@
  */
 
 #include <QDialog>
-#include "ui_previewSettings.h"
+#include "v4l2ucp/ui_previewSettings.h"
 
 #define APP_ORG "v4l2ucp"
 #define APP_NAME "v4l2ucp"

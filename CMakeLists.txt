@@ -146,9 +146,9 @@ qt4_add_resources(RC_SOURCES ${RCS})
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
-  include/v4l2ucp
+  include
   ${catkin_INCLUDE_DIRS}
-  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}/..
 )
 
 ## Declare a C++ library

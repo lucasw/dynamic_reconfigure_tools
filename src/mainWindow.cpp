@@ -36,9 +36,9 @@
 #include <QTimer>
 #include <QSettings>
 
-#include "v4l2controls.h"
-#include "mainWindow.h"
-#include "previewSettings.h"
+#include "v4l2ucp/v4l2controls.h"
+#include "v4l2ucp/mainWindow.h"
+#include "v4l2ucp/previewSettings.h"
 
 MainWindow::MainWindow(QWidget *parent, const char *name) :
     QMainWindow(parent),

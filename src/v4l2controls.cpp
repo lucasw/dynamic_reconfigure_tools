@@ -27,8 +27,8 @@
 #include <QValidator>
 #include <QMessageBox>
 
-#include "mainWindow.h"
-#include "v4l2controls.h"
+#include "v4l2ucp/mainWindow.h"
+#include "v4l2ucp/v4l2controls.h"
 
 int V4L2Control::exposure_auto = V4L2_EXPOSURE_MANUAL;
 int V4L2Control::focus_auto = 0;

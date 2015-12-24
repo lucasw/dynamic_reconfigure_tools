@@ -23,7 +23,7 @@
 
 #include <QApplication>
 
-#include "mainWindow.h"
+#include "v4l2ucp/mainWindow.h"
 
 void usage(const char *argv0)
 {
