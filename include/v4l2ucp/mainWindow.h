@@ -1,3 +1,5 @@
+#ifndef V4L2UCP_MAINWINDOW_H
+#define V4L2UCP_MAINWINDOW_H
 /*  v4l2ucp - A universal control panel for all V4L2 devices
     Copyright (C) 2005 Scott J. Bertin (scottbertin@yahoo.com)
     Copyright (C) 2009 Vasily Khoruzhick (anarsoul@gmail.com)
@@ -58,6 +60,8 @@ private:
   QTimer timer;
   QProcess *previewProcess;
 
-  MainWindow(QWidget *parent = 0, const char *name = 0);
+  explicit MainWindow(QWidget *parent = 0, const char *name = 0);
   void add_control(struct v4l2_queryctrl &ctrl, int fd, QWidget *parent, QGridLayout *);
 };
+
+#endif  // V4L2UCP_MAINWINDOW_H

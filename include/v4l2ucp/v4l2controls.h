@@ -1,3 +1,5 @@
+#ifndef V4L2UCP_V4L2CONTROLS_H
+#define V4L2UCP_V4L2CONTROLS_H
 /*  v4l2ucp - A universal control panel for all V4L2 devices
     Copyright (C) 2005 Scott J. Bertin (scottbertin@yahoo.com)
     Copyright (C) 2009 Vasily Khoruzhick (anarsoul@gmail.com)
@@ -139,9 +141,11 @@ public:
   V4L2ButtonControl(int fd, const struct v4l2_queryctrl &ctrl, QWidget *parent, MainWindow *mw);
 
 public slots:
-  void setValue(int) {};
+  void setValue(int val) {}
   int getValue()
   {
     return 0;
   };
 };
+
+#endif  // V4L2UCP_V4L2CONTROLS_H

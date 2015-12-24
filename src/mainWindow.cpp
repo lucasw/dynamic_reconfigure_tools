@@ -92,7 +92,6 @@ MainWindow::MainWindow(QWidget *parent, const char *name) :
   menuBar()->addMenu(menu);
 
   QObject::connect(&timer, SIGNAL(timeout()), this, SLOT(timerShot()));
-
 }
 
 void MainWindow::fileOpen()
@@ -120,7 +119,7 @@ MainWindow *MainWindow::openFile(const char *fileName)
   if (fd < 0)
   {
     QString msg;
-    msg.sprintf("Unable to open file %s\n%s", fileName, strerror(errno));
+    msg.sprintf("Unable to open file %s\n%s", 50, fileName, strerror(errno));
     QMessageBox::warning(NULL, "v4l2ucp: Unable to open file", msg, "OK");
     return NULL;
   }

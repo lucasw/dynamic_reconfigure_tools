@@ -1,3 +1,5 @@
+#ifndef V4L2UCP_PREVIEWSETTINGS_H
+#define V4L2UCP_PREVIEWSETTINGS_H
 /*  v4l2ucp - A universal control panel for all V4L2 devices
     Copyright (C) 2009 Vasily Khoruzhick (anarsoul@gmail.com)
 
@@ -44,8 +46,7 @@ public slots:
   void defaultsClicked();
 
 public:
-
-  PreviewSettingsDialog(QWidget *parent = NULL);
+  explicit PreviewSettingsDialog(QWidget *parent = NULL);
   ~PreviewSettingsDialog();
   void saveSettings();
 
@@ -56,3 +57,5 @@ private:
   void loadSettings();
   void connectSignals();
 };
+
+#endif  // V4L2UCP_PREVIEWSETTINGS_H

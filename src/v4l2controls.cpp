@@ -212,7 +212,7 @@ V4L2IntegerControl::V4L2IntegerControl
   sl->setMaximum(maximum);
   sl->setPageStep(pageStep);
   sl->setValue(default_value);
-  //sl->setLineStep(step);
+  // sl->setLineStep(step);
   sl->setVisible(true);
   this->layout.addWidget(sl);
 
