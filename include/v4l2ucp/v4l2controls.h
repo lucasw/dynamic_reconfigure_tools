@@ -22,8 +22,8 @@
 #include <linux/videodev2.h>
 
 #ifndef V4L2_CID_IRIS_ABSOLUTE
-#define V4L2_CID_IRIS_ABSOLUTE			(V4L2_CID_CAMERA_CLASS_BASE+17)
-#define V4L2_CID_IRIS_RELATIVE			(V4L2_CID_CAMERA_CLASS_BASE+18)
+#define V4L2_CID_IRIS_ABSOLUTE      (V4L2_CID_CAMERA_CLASS_BASE+17)
+#define V4L2_CID_IRIS_RELATIVE      (V4L2_CID_CAMERA_CLASS_BASE+18)
 #endif
 
 #include <QHBoxLayout>
@@ -36,109 +36,112 @@ class MainWindow;
 
 class V4L2Control : public QWidget
 {
-    Q_OBJECT
+  Q_OBJECT
 public slots:
-    void updateHardware();
-    virtual void updateStatus(bool hwChanged=false);
-    virtual void resetToDefault();
-    virtual void setValue(int val) = 0;
+  void updateHardware();
+  virtual void updateStatus(bool hwChanged = false);
+  virtual void resetToDefault();
+  virtual void setValue(int val) = 0;
 
 public:
-    virtual int getValue() = 0;
+  virtual int getValue() = 0;
 
 protected:
-    V4L2Control(int fd, const struct v4l2_queryctrl &ctrl, QWidget *parent, MainWindow *mw);
-    int fd;
-    int cid;
-    int default_value;
-    char name[32];
-    QHBoxLayout layout;
+  V4L2Control(int fd, const struct v4l2_queryctrl &ctrl, QWidget *parent, MainWindow *mw);
+  int fd;
+  int cid;
+  int default_value;
+  char name[32];
+  QHBoxLayout layout;
 
 private:
-    MainWindow *mw;
+  MainWindow *mw;
 
-    /* Not pretty we use these to keep track of the value of some special
-       ctrls which impact the writability of other ctrls for queryCleanup(). */
-    static int exposure_auto;
-    static int focus_auto;
-    static int hue_auto;
-    static int whitebalance_auto;
-    void cacheValue(const struct v4l2_control &c);
-    /* This function sets various flags for well known (UVC) controls, these
-       flags should really be set by the driver, but for older driver versions
-       this does not happen. */
-    void queryCleanup(struct v4l2_queryctrl *ctrl);
+  /* Not pretty we use these to keep track of the value of some special
+     ctrls which impact the writability of other ctrls for queryCleanup(). */
+  static int exposure_auto;
+  static int focus_auto;
+  static int hue_auto;
+  static int whitebalance_auto;
+  void cacheValue(const struct v4l2_control &c);
+  /* This function sets various flags for well known (UVC) controls, these
+     flags should really be set by the driver, but for older driver versions
+     this does not happen. */
+  void queryCleanup(struct v4l2_queryctrl *ctrl);
 };
 
 class V4L2IntegerControl : public V4L2Control
 {
-    Q_OBJECT
+  Q_OBJECT
 public:
-    V4L2IntegerControl(int fd, const struct v4l2_queryctrl &ctrl, QWidget *parent, MainWindow *mw);
+  V4L2IntegerControl(int fd, const struct v4l2_queryctrl &ctrl, QWidget *parent, MainWindow *mw);
 
 public slots:
-    void setValue(int val);
+  void setValue(int val);
 
 public:
-    int getValue();
+  int getValue();
 
 private slots:
-    void SetValueFromSlider(void);
-    void SetValueFromText(void);
+  void SetValueFromSlider(void);
+  void SetValueFromText(void);
 
 private:
-    int minimum;
-    int maximum;
-    int step;
-    QSlider *sl;
-    QLineEdit *le;
+  int minimum;
+  int maximum;
+  int step;
+  QSlider *sl;
+  QLineEdit *le;
 };
 
 class V4L2BooleanControl : public V4L2Control
 {
-    Q_OBJECT
+  Q_OBJECT
 public:
-    V4L2BooleanControl(int fd, const struct v4l2_queryctrl &ctrl, QWidget *parent, MainWindow *mw);
+  V4L2BooleanControl(int fd, const struct v4l2_queryctrl &ctrl, QWidget *parent, MainWindow *mw);
 
 public slots:
-    void setValue(int val);
+  void setValue(int val);
 
 public:
-    int getValue();
+  int getValue();
 
 private:
-    QCheckBox *cb;
+  QCheckBox *cb;
 };
 
 class V4L2MenuControl : public V4L2Control
 {
-    Q_OBJECT
+  Q_OBJECT
 public:
-    V4L2MenuControl(int fd, const struct v4l2_queryctrl &ctrl, QWidget *parent, MainWindow *mw);
+  V4L2MenuControl(int fd, const struct v4l2_queryctrl &ctrl, QWidget *parent, MainWindow *mw);
 
 public slots:
-    void setValue(int val);
+  void setValue(int val);
 
 public:
-    int getValue();
+  int getValue();
 
 private:
-    QComboBox *cb;
+  QComboBox *cb;
 
 private slots:
-    void menuActivated(int val);
+  void menuActivated(int val);
 };
 
 class V4L2ButtonControl : public V4L2Control
 {
-    Q_OBJECT
+  Q_OBJECT
 public slots:
-    void resetToDefault();
+  void resetToDefault();
 
 public:
-    V4L2ButtonControl(int fd, const struct v4l2_queryctrl &ctrl, QWidget *parent, MainWindow *mw);
+  V4L2ButtonControl(int fd, const struct v4l2_queryctrl &ctrl, QWidget *parent, MainWindow *mw);
 
 public slots:
-    void setValue(int) {};
-    int getValue() { return 0; };
+  void setValue(int) {};
+  int getValue()
+  {
+    return 0;
+  };
 };

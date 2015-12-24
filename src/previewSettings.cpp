@@ -23,82 +23,82 @@
 
 
 PreviewSettingsDialog::PreviewSettingsDialog(QWidget *parent)
-    : QDialog(parent)
+  : QDialog(parent)
 {
-    ui.setupUi(this);
+  ui.setupUi(this);
 
-    connectSignals();
-    loadSettings();
+  connectSignals();
+  loadSettings();
 }
 
 void PreviewSettingsDialog::connectSignals()
 {
-    QObject::connect(ui.envList, SIGNAL(itemDoubleClicked(QListWidgetItem *)),
-        this, SLOT(envItemDoubleClicked(QListWidgetItem *)));
-    QObject::connect(ui.envList, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)),
-        this, SLOT(listCurItemChanged(QListWidgetItem *, QListWidgetItem *)));
-    QObject::connect(ui.argList, SIGNAL(itemDoubleClicked(QListWidgetItem *)),
-        this, SLOT(argItemDoubleClicked(QListWidgetItem *)));
-    QObject::connect(ui.argList, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)),
-        this, SLOT(listCurItemChanged(QListWidgetItem *, QListWidgetItem *)));
-    QObject::connect(ui.addEnvBut, SIGNAL(clicked()),
-        this, SLOT(addEnvItemClicked()));
-    QObject::connect(ui.addArgBut, SIGNAL(clicked()),
-        this, SLOT(addArgItemClicked()));
-    QObject::connect(ui.removeEnvBut, SIGNAL(clicked()),
-        this, SLOT(delEnvItemClicked()));
-    QObject::connect(ui.removeArgBut, SIGNAL(clicked()),
-        this, SLOT(delArgItemClicked()));
-    QObject::connect(ui.defaultsBut, SIGNAL(clicked()),
-        this, SLOT(defaultsClicked()));
+  QObject::connect(ui.envList, SIGNAL(itemDoubleClicked(QListWidgetItem *)),
+                   this, SLOT(envItemDoubleClicked(QListWidgetItem *)));
+  QObject::connect(ui.envList, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)),
+                   this, SLOT(listCurItemChanged(QListWidgetItem *, QListWidgetItem *)));
+  QObject::connect(ui.argList, SIGNAL(itemDoubleClicked(QListWidgetItem *)),
+                   this, SLOT(argItemDoubleClicked(QListWidgetItem *)));
+  QObject::connect(ui.argList, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)),
+                   this, SLOT(listCurItemChanged(QListWidgetItem *, QListWidgetItem *)));
+  QObject::connect(ui.addEnvBut, SIGNAL(clicked()),
+                   this, SLOT(addEnvItemClicked()));
+  QObject::connect(ui.addArgBut, SIGNAL(clicked()),
+                   this, SLOT(addArgItemClicked()));
+  QObject::connect(ui.removeEnvBut, SIGNAL(clicked()),
+                   this, SLOT(delEnvItemClicked()));
+  QObject::connect(ui.removeArgBut, SIGNAL(clicked()),
+                   this, SLOT(delArgItemClicked()));
+  QObject::connect(ui.defaultsBut, SIGNAL(clicked()),
+                   this, SLOT(defaultsClicked()));
 }
 
 void PreviewSettingsDialog::loadSettings()
 {
-    QSettings settings(APP_ORG, APP_NAME);
+  QSettings settings(APP_ORG, APP_NAME);
 
-    if (settings.contains(SETTINGS_APP_BINARY_NAME))
-    {
-        ui.appNameEdit->setText(settings.value(SETTINGS_APP_BINARY_NAME).toString());
-    }
-    else
-    {
-        ui.appNameEdit->setText("mplayer");
-    }
+  if (settings.contains(SETTINGS_APP_BINARY_NAME))
+  {
+    ui.appNameEdit->setText(settings.value(SETTINGS_APP_BINARY_NAME).toString());
+  }
+  else
+  {
+    ui.appNameEdit->setText("mplayer");
+  }
 
-    if (settings.contains(SETTINGS_ENV_LIST))
+  if (settings.contains(SETTINGS_ENV_LIST))
+  {
+    QList<QVariant> envList = settings.value(SETTINGS_ENV_LIST).toList();
+    QList<QVariant>::iterator begin, end;
+    for (begin = envList.begin(),
+         end = envList.end(); begin != end; begin++)
     {
-        QList<QVariant> envList = settings.value(SETTINGS_ENV_LIST).toList();
-        QList<QVariant>::iterator begin, end;
-        for (begin = envList.begin(),
-            end = envList.end(); begin != end; begin++)
-        {
-            QListWidgetItem *item;
-            item = new QListWidgetItem((*begin).toString(), ui.envList);
-        }
+      QListWidgetItem *item;
+      item = new QListWidgetItem((*begin).toString(), ui.envList);
     }
-    else
-    {
-        QListWidgetItem *item;
-        item = new QListWidgetItem("LD_PRELOAD=/usr/lib/libv4l/v4l2convert.so", ui.envList);
-    }
+  }
+  else
+  {
+    QListWidgetItem *item;
+    item = new QListWidgetItem("LD_PRELOAD=/usr/lib/libv4l/v4l2convert.so", ui.envList);
+  }
 
-    if (settings.contains(SETTINGS_ARG_LIST))
+  if (settings.contains(SETTINGS_ARG_LIST))
+  {
+    QList<QVariant> argList = settings.value(SETTINGS_ARG_LIST).toList();
+    QList<QVariant>::iterator begin, end;
+    for (begin = argList.begin(),
+         end = argList.end(); begin != end; begin++)
     {
-        QList<QVariant> argList = settings.value(SETTINGS_ARG_LIST).toList();
-        QList<QVariant>::iterator begin, end;
-        for (begin = argList.begin(),
-            end = argList.end(); begin != end; begin++)
-        {
-            QListWidgetItem *item;
-            item = new QListWidgetItem((*begin).toString(), ui.argList);
-        }
+      QListWidgetItem *item;
+      item = new QListWidgetItem((*begin).toString(), ui.argList);
     }
-    else
-    {
-        QListWidgetItem *item;
-        item = new QListWidgetItem("tv://", ui.argList);
-    }
+  }
+  else
+  {
+    QListWidgetItem *item;
+    item = new QListWidgetItem("tv://", ui.argList);
+  }
 }
 
 PreviewSettingsDialog::~PreviewSettingsDialog()
@@ -107,114 +107,114 @@ PreviewSettingsDialog::~PreviewSettingsDialog()
 
 void PreviewSettingsDialog::saveSettings()
 {
-    QSettings settings(APP_ORG, APP_NAME);
+  QSettings settings(APP_ORG, APP_NAME);
 
-    settings.setValue(SETTINGS_APP_BINARY_NAME, ui.appNameEdit->text());
-    QList<QVariant> varList;
-    QList<QVariant>::iterator begin, end;
-    QListWidgetItem *item;
-    for (int i = 0; i < ui.envList->count(); i++)
+  settings.setValue(SETTINGS_APP_BINARY_NAME, ui.appNameEdit->text());
+  QList<QVariant> varList;
+  QList<QVariant>::iterator begin, end;
+  QListWidgetItem *item;
+  for (int i = 0; i < ui.envList->count(); i++)
+  {
+    item = ui.envList->item(i);
+    if (item)
     {
-        item = ui.envList->item(i);
-        if (item)
-        {
-            varList << QVariant(item->text());
-        }
+      varList << QVariant(item->text());
     }
-    settings.setValue(SETTINGS_ENV_LIST, varList);
-    varList.clear();
-    for (int i = 0; i < ui.argList->count(); i++)
+  }
+  settings.setValue(SETTINGS_ENV_LIST, varList);
+  varList.clear();
+  for (int i = 0; i < ui.argList->count(); i++)
+  {
+    item = ui.argList->item(i);
+    if (item)
     {
-        item = ui.argList->item(i);
-        if (item)
-        {
-            varList << QVariant(item->text());
-        }
+      varList << QVariant(item->text());
     }
-    settings.setValue(SETTINGS_ARG_LIST, varList);
+  }
+  settings.setValue(SETTINGS_ARG_LIST, varList);
 
-    settings.sync();
+  settings.sync();
 }
 
 void PreviewSettingsDialog::envItemDoubleClicked(QListWidgetItem *item)
 {
-    ui.envList->openPersistentEditor(item);
+  ui.envList->openPersistentEditor(item);
 }
 
 void PreviewSettingsDialog::argItemDoubleClicked(QListWidgetItem *item)
 {
-    ui.argList->openPersistentEditor(item);
+  ui.argList->openPersistentEditor(item);
 }
 
 void PreviewSettingsDialog::addEnvItemClicked()
 {
-    if (!ui.envEdit->text().isEmpty())
-    {
-        QListWidgetItem *item = NULL;
-        item = new QListWidgetItem(ui.envEdit->text(), ui.envList);
-        ui.envEdit->clear();
-    }
-    else
-    {
-        QMessageBox::warning(NULL, "v4l2ucp", "Empty values seems to be meaningless!", "OK");
-    }
+  if (!ui.envEdit->text().isEmpty())
+  {
+    QListWidgetItem *item = NULL;
+    item = new QListWidgetItem(ui.envEdit->text(), ui.envList);
+    ui.envEdit->clear();
+  }
+  else
+  {
+    QMessageBox::warning(NULL, "v4l2ucp", "Empty values seems to be meaningless!", "OK");
+  }
 }
 
 void PreviewSettingsDialog::addArgItemClicked()
 {
-    if (!ui.argEdit->text().isEmpty())
-    {
-        QListWidgetItem *item = NULL;
-        item = new QListWidgetItem(ui.argEdit->text(), ui.argList);
-        ui.argEdit->clear();
-    }
-    else
-    {
-        QMessageBox::warning(NULL, "v4l2ucp", "Empty values seems to be meaningless!", "OK");
-    }
+  if (!ui.argEdit->text().isEmpty())
+  {
+    QListWidgetItem *item = NULL;
+    item = new QListWidgetItem(ui.argEdit->text(), ui.argList);
+    ui.argEdit->clear();
+  }
+  else
+  {
+    QMessageBox::warning(NULL, "v4l2ucp", "Empty values seems to be meaningless!", "OK");
+  }
 }
 void PreviewSettingsDialog::listCurItemChanged(QListWidgetItem *newItem, QListWidgetItem *oldItem)
 {
-    if (oldItem)
-    {
-        oldItem->listWidget()->closePersistentEditor(oldItem);
-    }
+  if (oldItem)
+  {
+    oldItem->listWidget()->closePersistentEditor(oldItem);
+  }
 }
 
 void PreviewSettingsDialog::delEnvItemClicked()
 {
-    if (ui.envList->currentItem())
-    {
-        delete ui.envList->currentItem();
-    }
-    else
-    {
-        QMessageBox::warning(NULL, "v4l2ucp", "Select entry to delete.", "OK");
-    }
+  if (ui.envList->currentItem())
+  {
+    delete ui.envList->currentItem();
+  }
+  else
+  {
+    QMessageBox::warning(NULL, "v4l2ucp", "Select entry to delete.", "OK");
+  }
 }
 
 void PreviewSettingsDialog::delArgItemClicked()
 {
-    if (ui.argList->currentItem())
-    {
-        delete ui.argList->currentItem();
-    }
-    else
-    {
-        QMessageBox::warning(NULL, "v4l2ucp", "Select entry to delete.", "OK");
-    }
+  if (ui.argList->currentItem())
+  {
+    delete ui.argList->currentItem();
+  }
+  else
+  {
+    QMessageBox::warning(NULL, "v4l2ucp", "Select entry to delete.", "OK");
+  }
 }
 
 void PreviewSettingsDialog::defaultsClicked()
 {
-    QListWidgetItem *item;
+  QListWidgetItem *item;
 
-    ui.argList->clear();
-    ui.envList->clear();
-    ui.argEdit->clear();
-    ui.envEdit->clear();
-    ui.appNameEdit->setText("mplayer");
+  ui.argList->clear();
+  ui.envList->clear();
+  ui.argEdit->clear();
+  ui.envEdit->clear();
+  ui.appNameEdit->setText("mplayer");
 
-    item = new QListWidgetItem("LD_PRELOAD=/usr/lib/libv4l/v4l2convert.so", ui.envList);
-    item = new QListWidgetItem("tv://", ui.argList);
+  item = new QListWidgetItem("LD_PRELOAD=/usr/lib/libv4l/v4l2convert.so", ui.envList);
+  item = new QListWidgetItem("tv://", ui.argList);
 }

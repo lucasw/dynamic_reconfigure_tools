@@ -6,6 +6,7 @@ project(v4l2ucp)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  roslint
   rospy
   rqt_gui
   rqt_gui_cpp
@@ -20,6 +21,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
 # catkin_python_setup()
+
+roslint_cpp()
 
 set(V4L2UCP_VERSION 2.0.2)
 add_definitions(-Wall -DV4L2UCP_VERSION="${V4L2UCP_VERSION}")

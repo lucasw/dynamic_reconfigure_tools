@@ -27,57 +27,66 @@
 
 void usage(const char *argv0)
 {
-    using std::cout;
-    using std::endl;
+  using std::cout;
+  using std::endl;
 
-    cout << "Usage: " << argv0 << " [-h | --help] [filename]..." << endl;
-    cout << "-h or --help will print this message and exit." << endl;
-    cout << "filename is one or more device files for the ";
-    cout << "V4L2 devices to control." << endl;
-    cout << "If no filenames are given, the filename specified in the" << endl;
-    cout << "environment variable V4L2UCP_DEV, or /dev/video0 will be used.";
-    cout << endl;
-    cout << "Also accepts standard Qt arguments." << endl;
+  cout << "Usage: " << argv0 << " [-h | --help] [filename]..." << endl;
+  cout << "-h or --help will print this message and exit." << endl;
+  cout << "filename is one or more device files for the ";
+  cout << "V4L2 devices to control." << endl;
+  cout << "If no filenames are given, the filename specified in the" << endl;
+  cout << "environment variable V4L2UCP_DEV, or /dev/video0 will be used.";
+  cout << endl;
+  cout << "Also accepts standard Qt arguments." << endl;
 }
 
 int main(int argc, char **argv)
 {
-    MainWindow *w;
-    QApplication a(argc, argv);
-    bool windowOpened = false;
-    
-    for(int i=1; i<argc; i++) {
-        if(!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help")) {
-            usage(argv[0]);
-            exit(EXIT_SUCCESS);
-        }
-        w = MainWindow::openFile(argv[i]);
-        if(w) {
-            w->show();
-            windowOpened = true;
-        }
+  MainWindow *w;
+  QApplication a(argc, argv);
+  bool windowOpened = false;
+
+  for (int i = 1; i < argc; i++)
+  {
+    if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help"))
+    {
+      usage(argv[0]);
+      exit(EXIT_SUCCESS);
     }
-    
-    if(argc == 1) {
-        const char *fname = getenv("V4L2UCP_DEV");
-        if(fname) {
-            w = MainWindow::openFile(fname);
-            if(w) {
-                w->show();
-                windowOpened = true;
-            }
-        } else {
-            w = MainWindow::openFile("/dev/video0");
-            if(w) {
-                w->show();
-                windowOpened = true;
-            }
-        }
+    w = MainWindow::openFile(argv[i]);
+    if (w)
+    {
+      w->show();
+      windowOpened = true;
     }
-    
-    if(!windowOpened)
-        exit(EXIT_FAILURE);
-    
-    a.connect( &a, SIGNAL(lastWindowClosed()), &a, SLOT(quit()) );
-    return a.exec();
+  }
+
+  if (argc == 1)
+  {
+    const char *fname = getenv("V4L2UCP_DEV");
+    if (fname)
+    {
+      w = MainWindow::openFile(fname);
+      if (w)
+      {
+        w->show();
+        windowOpened = true;
+      }
+    }
+    else
+    {
+      w = MainWindow::openFile("/dev/video0");
+      if (w)
+      {
+        w->show();
+        windowOpened = true;
+      }
+    }
+  }
+
+  if (!windowOpened)
+    exit(EXIT_FAILURE);
+
+  a.connect(&a, SIGNAL(lastWindowClosed()), &a, SLOT(quit()));
+  return a.exec();
 }

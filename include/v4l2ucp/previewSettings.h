@@ -30,29 +30,29 @@ class QListWidgetItem;
 
 class PreviewSettingsDialog : public QDialog
 {
-    Q_OBJECT
+  Q_OBJECT
 
-    public slots:
-        void envItemDoubleClicked(QListWidgetItem *item);
-        void argItemDoubleClicked(QListWidgetItem *item);
-        void listCurItemChanged(QListWidgetItem *newItem, QListWidgetItem *oldItem);
+public slots:
+  void envItemDoubleClicked(QListWidgetItem *item);
+  void argItemDoubleClicked(QListWidgetItem *item);
+  void listCurItemChanged(QListWidgetItem *newItem, QListWidgetItem *oldItem);
 
-        void addEnvItemClicked();
-        void addArgItemClicked();
-        void delEnvItemClicked();
-        void delArgItemClicked();
-        void defaultsClicked();
+  void addEnvItemClicked();
+  void addArgItemClicked();
+  void delEnvItemClicked();
+  void delArgItemClicked();
+  void defaultsClicked();
 
-    public:
+public:
 
-        PreviewSettingsDialog(QWidget *parent = NULL);
-        ~PreviewSettingsDialog();
-        void saveSettings();
+  PreviewSettingsDialog(QWidget *parent = NULL);
+  ~PreviewSettingsDialog();
+  void saveSettings();
 
-    protected:
-        Ui::previewSettingsDialog ui;
+protected:
+  Ui::previewSettingsDialog ui;
 
-    private:
-        void loadSettings();
-        void connectSignals();
+private:
+  void loadSettings();
+  void connectSignals();
 };

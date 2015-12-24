@@ -25,39 +25,39 @@
 
 class MainWindow : public QMainWindow
 {
-    Q_OBJECT
-    
+  Q_OBJECT
+
 public slots:
-    void fileOpen();
-    void updateDisabled();
-    void update1Sec();
-    void update5Sec();
-    void update10Sec();
-    void update20Sec();
-    void update30Sec();
-    void timerShot();
-    void about();
-    void aboutQt();
-    void startPreview();
-    void configurePreview();
-    void previewProcError(QProcess::ProcessError er);
-    void previewFinished(int exitCode, QProcess::ExitStatus status);
-   
+  void fileOpen();
+  void updateDisabled();
+  void update1Sec();
+  void update5Sec();
+  void update10Sec();
+  void update20Sec();
+  void update30Sec();
+  void timerShot();
+  void about();
+  void aboutQt();
+  void startPreview();
+  void configurePreview();
+  void previewProcError(QProcess::ProcessError er);
+  void previewFinished(int exitCode, QProcess::ExitStatus status);
+
 signals:
-    void updateNow();
+  void updateNow();
 
 public:
-    static MainWindow *openFile(const char *fileName);
-    ~MainWindow();
+  static MainWindow *openFile(const char *fileName);
+  ~MainWindow();
 
 private:
-    QMenu *updateMenu, *resetMenu;
-    int fd;
-    QAction *resetAllId;
-    QAction *updateActions[6];
-    QTimer timer;
-    QProcess *previewProcess;
-    
-    MainWindow(QWidget *parent=0, const char *name=0);
-    void add_control(struct v4l2_queryctrl &ctrl, int fd, QWidget *parent, QGridLayout *);
+  QMenu *updateMenu, *resetMenu;
+  int fd;
+  QAction *resetAllId;
+  QAction *updateActions[6];
+  QTimer timer;
+  QProcess *previewProcess;
+
+  MainWindow(QWidget *parent = 0, const char *name = 0);
+  void add_control(struct v4l2_queryctrl &ctrl, int fd, QWidget *parent, QGridLayout *);
 };
