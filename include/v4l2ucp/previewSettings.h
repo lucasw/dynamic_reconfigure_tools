@@ -56,6 +56,8 @@ protected:
 private:
   void loadSettings();
   void connectSignals();
+
+  std::vector<QListWidgetItem*> items_;
 };
 
 #endif  // V4L2UCP_PREVIEWSETTINGS_H

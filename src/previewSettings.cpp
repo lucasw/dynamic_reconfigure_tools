@@ -73,14 +73,12 @@ void PreviewSettingsDialog::loadSettings()
     for (begin = envList.begin(),
          end = envList.end(); begin != end; begin++)
     {
-      QListWidgetItem *item;
-      item = new QListWidgetItem((*begin).toString(), ui.envList);
+      items_.push_back(new QListWidgetItem((*begin).toString(), ui.envList));
     }
   }
   else
   {
-    QListWidgetItem *item;
-    item = new QListWidgetItem("LD_PRELOAD=/usr/lib/libv4l/v4l2convert.so", ui.envList);
+    items_.push_back(new QListWidgetItem("LD_PRELOAD=/usr/lib/libv4l/v4l2convert.so", ui.envList));
   }
 
   if (settings.contains(SETTINGS_ARG_LIST))
@@ -90,14 +88,12 @@ void PreviewSettingsDialog::loadSettings()
     for (begin = argList.begin(),
          end = argList.end(); begin != end; begin++)
     {
-      QListWidgetItem *item;
-      item = new QListWidgetItem((*begin).toString(), ui.argList);
+      items_.push_back(new QListWidgetItem((*begin).toString(), ui.argList));
     }
   }
   else
   {
-    QListWidgetItem *item;
-    item = new QListWidgetItem("tv://", ui.argList);
+    items_.push_back(new QListWidgetItem("tv://", ui.argList));
   }
 }
 
@@ -150,8 +146,7 @@ void PreviewSettingsDialog::addEnvItemClicked()
 {
   if (!ui.envEdit->text().isEmpty())
   {
-    QListWidgetItem *item = NULL;
-    item = new QListWidgetItem(ui.envEdit->text(), ui.envList);
+    items_.push_back(new QListWidgetItem(ui.envEdit->text(), ui.envList));
     ui.envEdit->clear();
   }
   else
@@ -164,8 +159,7 @@ void PreviewSettingsDialog::addArgItemClicked()
 {
   if (!ui.argEdit->text().isEmpty())
   {
-    QListWidgetItem *item = NULL;
-    item = new QListWidgetItem(ui.argEdit->text(), ui.argList);
+    items_.push_back(new QListWidgetItem(ui.argEdit->text(), ui.argList));
     ui.argEdit->clear();
   }
   else
@@ -207,14 +201,12 @@ void PreviewSettingsDialog::delArgItemClicked()
 
 void PreviewSettingsDialog::defaultsClicked()
 {
-  QListWidgetItem *item;
-
   ui.argList->clear();
   ui.envList->clear();
   ui.argEdit->clear();
   ui.envEdit->clear();
   ui.appNameEdit->setText("mplayer");
 
-  item = new QListWidgetItem("LD_PRELOAD=/usr/lib/libv4l/v4l2convert.so", ui.envList);
-  item = new QListWidgetItem("tv://", ui.argList);
+  items_.push_back(new QListWidgetItem("LD_PRELOAD=/usr/lib/libv4l/v4l2convert.so", ui.envList));
+  items_.push_back(new QListWidgetItem("tv://", ui.argList));
 }
