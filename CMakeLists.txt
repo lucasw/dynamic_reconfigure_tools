@@ -22,6 +22,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
 # catkin_python_setup()
 
+# TODO get rid of QString sprintfs later
+set(ROSLINT_CPP_OPTS "--filter=-runtime/printf")
 roslint_cpp()
 
 set(V4L2UCP_VERSION 2.0.2)

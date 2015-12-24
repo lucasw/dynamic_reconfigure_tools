@@ -61,7 +61,7 @@ private:
   QProcess *previewProcess;
 
   explicit MainWindow(QWidget *parent = 0, const char *name = 0);
-  void add_control(struct v4l2_queryctrl &ctrl, int fd, QWidget *parent, QGridLayout *);
+  void add_control(const struct v4l2_queryctrl &ctrl, int fd, QWidget *parent, QGridLayout *);
 };
 
 #endif  // V4L2UCP_MAINWINDOW_H

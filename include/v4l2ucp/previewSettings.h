@@ -20,6 +20,8 @@
  */
 
 #include <QDialog>
+#include <vector>
+
 #include "v4l2ucp/ui_previewSettings.h"
 
 #define APP_ORG "v4l2ucp"

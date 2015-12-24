@@ -250,7 +250,7 @@ MainWindow::~MainWindow()
     v4l2_close(fd);
 }
 
-void MainWindow::add_control(struct v4l2_queryctrl &ctrl, int fd, QWidget *parent, QGridLayout *layout)
+void MainWindow::add_control(const struct v4l2_queryctrl &ctrl, int fd, QWidget *parent, QGridLayout *layout)
 {
   QWidget *w = NULL;
 
