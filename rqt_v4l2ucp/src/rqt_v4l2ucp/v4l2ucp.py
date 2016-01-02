@@ -49,6 +49,12 @@ class MyPlugin(Plugin):
         # TODO need to look through controls namespace params and create
         # control for them, put this in a function and allow refreshing
 
+        rospy.loginfo(rospy.get_namespace())
+        all_params = rospy.get_param_names()
+        for param in all_params:
+            if param.find(rospy.get_namespace() + "controls/") >= 0:
+                rospy.loginfo(param)
+
         self.slider = QSlider()
         self.layout.addWidget(self.slider)
         self.slider.setOrientation(QtCore.Qt.Horizontal)

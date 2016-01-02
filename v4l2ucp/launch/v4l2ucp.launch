@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="device" default="/dev/video0" />
+
+  <group ns="v4l2ucp" >
+  <node name="v4l2ucp" pkg="v4l2ucp" type="v4l2ucp"
+      output="screen" >
+    <param name="device" value="$(arg device)" />
+  </node>
+  <node name="rqt_v4l2ucp" pkg="rqt_v4l2ucp" type="rqt_v4l2ucp"
+      output="screen" >
+  </node>
+  </group>  <!-- v4l2ucp -->
+</launch>
