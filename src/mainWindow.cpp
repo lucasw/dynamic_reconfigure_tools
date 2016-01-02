@@ -107,19 +107,19 @@ void MainWindow::fileOpen()
                         "All (*)");
   if (!newfilename.isEmpty())
   {
-    MainWindow *w = openFile(newfilename.toUtf8());
+    MainWindow *w = openFile(std::string(newfilename.toUtf8()));
     if (w)
       w->show();
   }
 }
 
-MainWindow *MainWindow::openFile(const char *fileName)
+MainWindow *MainWindow::openFile(const std::string fileName)
 {
-  int fd = v4l2_open(fileName, O_RDWR, 0);
+  int fd = v4l2_open(fileName.c_str(), O_RDWR, 0);
   if (fd < 0)
   {
     QString msg;
-    msg.sprintf("Unable to open file %s\n%s", fileName, strerror(errno));
+    msg.sprintf("Unable to open file %s\n%s", fileName.c_str(), strerror(errno));
     QMessageBox::warning(NULL, "v4l2ucp: Unable to open file", msg, "OK");
     return NULL;
   }
@@ -128,7 +128,7 @@ MainWindow *MainWindow::openFile(const char *fileName)
   if (v4l2_ioctl(fd, VIDIOC_QUERYCAP, &cap) == -1)
   {
     QString msg;
-    msg.sprintf("%s is not a V4L2 device", fileName);
+    msg.sprintf("%s is not a V4L2 device", fileName.c_str());
     QMessageBox::warning(NULL, "v4l2ucp: Not a V4L2 device", msg, "OK");
     return NULL;
   }
@@ -136,7 +136,7 @@ MainWindow *MainWindow::openFile(const char *fileName)
   MainWindow *mw = new MainWindow();
   mw->fd = fd;
   QString str("v4l2ucp - ");
-  str.append(fileName);
+  str.append(fileName.c_str());
   mw->setWindowTitle(str);
 
   QWidget *grid = new QWidget(mw);

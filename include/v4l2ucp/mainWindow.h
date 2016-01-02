@@ -49,7 +49,7 @@ signals:
   void updateNow();
 
 public:
-  static MainWindow *openFile(const char *fileName);
+  static MainWindow* openFile(const std::string fileName);
   ~MainWindow();
 
 private:

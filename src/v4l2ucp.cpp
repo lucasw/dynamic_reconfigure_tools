@@ -20,7 +20,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
-
+#include <ros/ros.h>
 #include <QApplication>
 
 #include "v4l2ucp/mainWindow.h"
@@ -42,50 +42,18 @@ void usage(const char *argv0)
 
 int main(int argc, char **argv)
 {
+  ros::init(argc, argv, "v4l2ucp");
   MainWindow *w;
   QApplication a(argc, argv);
-  bool windowOpened = false;
 
-  for (int i = 1; i < argc; i++)
+  std::string device = "/dev/video0";
+  ros::param::get("~device", device);
+
+  w = MainWindow::openFile(device);
+  if (w)
   {
-    if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help"))
-    {
-      usage(argv[0]);
-      exit(EXIT_SUCCESS);
-    }
-    w = MainWindow::openFile(argv[i]);
-    if (w)
-    {
-      w->show();
-      windowOpened = true;
-    }
+    w->show();
   }
-
-  if (argc == 1)
-  {
-    const char *fname = getenv("V4L2UCP_DEV");
-    if (fname)
-    {
-      w = MainWindow::openFile(fname);
-      if (w)
-      {
-        w->show();
-        windowOpened = true;
-      }
-    }
-    else
-    {
-      w = MainWindow::openFile("/dev/video0");
-      if (w)
-      {
-        w->show();
-        windowOpened = true;
-      }
-    }
-  }
-
-  if (!windowOpened)
-    exit(EXIT_FAILURE);
 
   a.connect(&a, SIGNAL(lastWindowClosed()), &a, SLOT(quit()));
   return a.exec();
