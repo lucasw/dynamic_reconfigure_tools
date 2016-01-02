@@ -18,23 +18,24 @@
 
  */
 
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <cerrno>
-#include <cstring>
-#include <libv4l2.h>
-
-#include <QScrollArea>
-#include <QFileDialog>
-#include <QString>
-#include <QLabel>
-#include <QPushButton>
 #include <QApplication>
+#include <QFileDialog>
+#include <QLabel>
+#include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
-#include <QMenu>
-#include <QTimer>
+#include <QPushButton>
+#include <QScrollArea>
 #include <QSettings>
+#include <QString>
+#include <QTimer>
+#include <cerrno>
+#include <cstring>
+#include <fcntl.h>
+#include <functional>
+#include <libv4l2.h>
+#include <ros/ros.h>
+#include <sys/ioctl.h>
 
 #include "v4l2ucp/v4l2controls.h"
 #include "v4l2ucp/mainWindow.h"
@@ -250,8 +251,27 @@ MainWindow::~MainWindow()
     v4l2_close(fd);
 }
 
+bool not_alnum(char s)
+{
+  return not std::isalnum(s);
+}
+
 void MainWindow::add_control(const struct v4l2_queryctrl &ctrl, int fd, QWidget *parent, QGridLayout *layout)
 {
+  std::stringstream name_ss;
+  name_ss << ctrl.name;
+  std::string name = name_ss.str();
+  //std::replace(name.begin(), name.end(), " ", "_");
+
+  // http://stackoverflow.com/questions/6319872/how-to-strip-all-non-alphanumeric-characters-from-a-string-in-c
+  // name.erase(std::remove_if(name.begin(), name.end(), std::not1(std::ptr_fun(std::isalnum)), name.end()), name.end());
+  name.erase(std::remove_if(name.begin(), name.end(),
+      (int(*)(int))not_alnum), name.end());
+
+  ros::param::set(name, name_ss.str());
+  ros::param::set(name + "_min", ctrl.minimum);
+  ros::param::set(name + "_max", ctrl.maximum);
+
   QWidget *w = NULL;
 
   if (ctrl.flags & V4L2_CTRL_FLAG_DISABLED)

@@ -25,21 +25,6 @@
 
 #include "v4l2ucp/mainWindow.h"
 
-void usage(const char *argv0)
-{
-  using std::cout;
-  using std::endl;
-
-  cout << "Usage: " << argv0 << " [-h | --help] [filename]..." << endl;
-  cout << "-h or --help will print this message and exit." << endl;
-  cout << "filename is one or more device files for the ";
-  cout << "V4L2 devices to control." << endl;
-  cout << "If no filenames are given, the filename specified in the" << endl;
-  cout << "environment variable V4L2UCP_DEV, or /dev/video0 will be used.";
-  cout << endl;
-  cout << "Also accepts standard Qt arguments." << endl;
-}
-
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "v4l2ucp");
