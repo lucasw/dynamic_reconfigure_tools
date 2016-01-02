@@ -3,7 +3,8 @@ import rospy
 
 from qt_gui.plugin import Plugin
 from python_qt_binding import loadUi
-from python_qt_binding.QtGui import QWidget
+from python_qt_binding.QtGui import QWidget, QVBoxLayout, QSlider
+from python_qt_binding import QtCore
 
 class MyPlugin(Plugin):
 
@@ -42,6 +43,15 @@ class MyPlugin(Plugin):
             self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
         # Add widget to the user interface
         context.add_widget(self._widget)
+
+        self.layout = self._widget.findChild(QVBoxLayout, 'vertical_layout')
+
+        # TODO need to look through controls namespace params and create
+        # control for them, put this in a function and allow refreshing
+
+        self.slider = QSlider()
+        self.layout.addWidget(self.slider)
+        self.slider.setOrientation(QtCore.Qt.Horizontal)
 
     def shutdown_plugin(self):
         # TODO unregister all publishers here
