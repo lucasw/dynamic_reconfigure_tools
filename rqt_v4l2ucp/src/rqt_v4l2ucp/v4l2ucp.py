@@ -3,7 +3,7 @@ import rospy
 
 from qt_gui.plugin import Plugin
 from python_qt_binding import loadUi
-from python_qt_binding.QtGui import QWidget, QVBoxLayout, QSlider
+from python_qt_binding.QtGui import QHBoxLayout, QLabel, QVBoxLayout, QSlider, QWidget
 from python_qt_binding import QtCore
 
 class MyPlugin(Plugin):
@@ -49,15 +49,25 @@ class MyPlugin(Plugin):
         # TODO need to look through controls namespace params and create
         # control for them, put this in a function and allow refreshing
 
-        rospy.loginfo(rospy.get_namespace())
+        #rospy.loginfo(rospy.get_namespace())
         all_params = rospy.get_param_names()
         for param in all_params:
             if param.find(rospy.get_namespace() + "controls/") >= 0:
-                rospy.loginfo(param)
+                if param.find("_min") < 0 and param.find("_max") < 0:
+                    # TODO
+                    hlayout = QHBoxLayout()
+                    self.layout.addLayout(hlayout)
 
-        self.slider = QSlider()
-        self.layout.addWidget(self.slider)
-        self.slider.setOrientation(QtCore.Qt.Horizontal)
+                    rospy.loginfo(param)
+                    label = QLabel()
+                    label.setText(param)
+                    hlayout.addWidget(label)
+                    minimum = rospy.get_param(param + "_min")
+                    maximum = rospy.get_param(param + "_max")
+
+                    slider = QSlider()
+                    slider.setOrientation(QtCore.Qt.Horizontal)
+                    hlayout.addWidget(slider)
 
     def shutdown_plugin(self):
         # TODO unregister all publishers here

@@ -268,7 +268,7 @@ void MainWindow::add_control(const struct v4l2_queryctrl &ctrl, int fd, QWidget 
   name.erase(std::remove_if(name.begin(), name.end(),
       (int(*)(int))not_alnum), name.end());
 
-  ros::param::set(name, name_ss.str());
+  ros::param::set("controls/" + name, name_ss.str());
   ros::param::set("controls/" + name + "_min", ctrl.minimum);
   ros::param::set("controls/" + name + "_max", ctrl.maximum);
 
