@@ -1,6 +1,11 @@
 <?xml version="1.0"?>
 <launch>
   <arg name="device" default="/dev/video0" />
+  <!--arg name="width" default="1920" />
+  <arg name="height" default="1080" /-->
+  <arg name="width" default="1280" />
+  <arg name="height" default="720" />
+  <arg name="frame_rate" default="5" />
 
   <group ns="v4l2ucp" >
   <node name="v4l2ucp" pkg="v4l2ucp" type="v4l2ucp"
@@ -11,4 +16,15 @@
       output="screen" >
   </node>
   </group>  <!-- v4l2ucp -->
+
+  <node name="usb_cam" pkg="usb_cam" type="usb_cam_node"
+      output="screen" >
+    <param name="image_width" value="$(arg width)" />
+    <param name="image_height" value="$(arg height)" />
+    <param name="framerate" value="$(arg frame_rate)" />
+    <param name="video_device" value="$(arg device)" />
+  </node>
+  <node name="rqt_image_view" pkg="rqt_image_view" type="rqt_image_view"
+      ns="usb_cam" >
+  </node>
 </launch>

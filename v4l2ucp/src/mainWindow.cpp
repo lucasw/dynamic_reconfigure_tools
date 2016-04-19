@@ -37,7 +37,6 @@
 #include <ros/ros.h>
 #include <sys/ioctl.h>
 
-#include "v4l2ucp/v4l2controls.h"
 #include "v4l2ucp/mainWindow.h"
 #include "v4l2ucp/previewSettings.h"
 
@@ -268,9 +267,11 @@ void MainWindow::add_control(const struct v4l2_queryctrl &ctrl, int fd, QWidget 
   name.erase(std::remove_if(name.begin(), name.end(),
       (int(*)(int))not_alnum), name.end());
 
+  // TODO(lucasw) clear out all other params under controls first
   ros::param::set("controls/" + name, name_ss.str());
   ros::param::set("controls/" + name + "_min", ctrl.minimum);
   ros::param::set("controls/" + name + "_max", ctrl.maximum);
+  ros::param::set("controls/" + name + "_type", int(ctrl.type));
 
   QWidget *w = NULL;
 
@@ -283,22 +284,35 @@ void MainWindow::add_control(const struct v4l2_queryctrl &ctrl, int fd, QWidget 
   switch (ctrl.type)
   {
   case V4L2_CTRL_TYPE_INTEGER:
-    w = new V4L2IntegerControl(fd, ctrl, parent, this);
+    integer_controls_[name] = new V4L2IntegerControl(fd, ctrl, parent, this);
+    w = integer_controls_[name];
+    sub_[name] = nh_.subscribe<std_msgs::Int32>("controls/" + name, 1,
+      boost::bind(&MainWindow::integerControlCallback, this, _1, name));
     break;
   case V4L2_CTRL_TYPE_BOOLEAN:
-    w = new V4L2BooleanControl(fd, ctrl, parent, this);
+    bool_controls_[name] = new V4L2BooleanControl(fd, ctrl, parent, this);
+    w = bool_controls_[name];
+    sub_[name] = nh_.subscribe<std_msgs::Int32>("controls/" + name, 1,
+      boost::bind(&MainWindow::boolControlCallback, this, _1, name));
     break;
   case V4L2_CTRL_TYPE_MENU:
-    w = new V4L2MenuControl(fd, ctrl, parent, this);
+    menu_controls_[name] = new V4L2MenuControl(fd, ctrl, parent, this);
+    w = menu_controls_[name];
+    sub_[name] = nh_.subscribe<std_msgs::Int32>("controls/" + name, 1,
+      boost::bind(&MainWindow::menuControlCallback, this, _1, name));
     break;
   case V4L2_CTRL_TYPE_BUTTON:
-    w = new V4L2ButtonControl(fd, ctrl, parent, this);
+    button_controls_[name] = new V4L2ButtonControl(fd, ctrl, parent, this);
+    w = button_controls_[name];
+    sub_[name] = nh_.subscribe<std_msgs::Int32>("controls/" + name, 1,
+      boost::bind(&MainWindow::buttonControlCallback, this, _1, name));
     break;
   case V4L2_CTRL_TYPE_INTEGER64:
   case V4L2_CTRL_TYPE_CTRL_CLASS:
   default:
     break;
   }
+
 
   if (!w)
   {
@@ -336,6 +350,32 @@ void MainWindow::add_control(const struct v4l2_queryctrl &ctrl, int fd, QWidget 
     QObject::connect(pb, SIGNAL(clicked()), w, SLOT(resetToDefault()));
     QObject::connect(resetAllId, SIGNAL(triggered(bool)), w, SLOT(resetToDefault()));
   }
+}
+
+void MainWindow::integerControlCallback(
+    const std_msgs::Int32::ConstPtr& msg, std::string name)
+{
+  ROS_INFO_STREAM("integer " << name << " " << msg->data);
+  integer_controls_[name]->setValue(msg->data);
+}
+
+void MainWindow::boolControlCallback(
+    const std_msgs::Int32::ConstPtr& msg, std::string name)
+{
+  bool_controls_[name]->setValue(msg->data);
+}
+
+void MainWindow::menuControlCallback(
+    const std_msgs::Int32::ConstPtr& msg, std::string name)
+{
+  menu_controls_[name]->setValue(msg->data);
+}
+
+void MainWindow::buttonControlCallback(
+    const std_msgs::Int32::ConstPtr& msg, std::string name)
+{
+  // TODO(lucasw) this doesn't do anything
+  button_controls_[name]->setValue(msg->data);
 }
 
 void MainWindow::about()

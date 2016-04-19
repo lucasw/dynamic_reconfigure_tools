@@ -50,10 +50,13 @@ class MyPlugin(Plugin):
         # control for them, put this in a function and allow refreshing
 
         #rospy.loginfo(rospy.get_namespace())
+        # TODO(lucasw) maybe this should be a pickled string instead
+        # of a bunch of params?
         all_params = rospy.get_param_names()
         for param in all_params:
             if param.find(rospy.get_namespace() + "controls/") >= 0:
-                if param.find("_min") < 0 and param.find("_max") < 0:
+                if param.find("_min") < 0 and param.find("_max") < 0 and \
+                        param.find("_type") < 0:
                     # TODO
                     hlayout = QHBoxLayout()
                     self.layout.addLayout(hlayout)

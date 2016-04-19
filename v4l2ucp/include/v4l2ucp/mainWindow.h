@@ -24,6 +24,9 @@
 #include <QMenu>
 #include <QGridLayout>
 #include <QProcess>
+#include <ros/ros.h>
+#include <std_msgs/Int32.h>
+#include "v4l2ucp/v4l2controls.h"
 
 class MainWindow : public QMainWindow
 {
@@ -59,9 +62,21 @@ private:
   QAction *updateActions[6];
   QTimer timer;
   QProcess *previewProcess;
+  ros::NodeHandle nh_;
+  std::map<std::string, ros::Subscriber> sub_;
+
+  std::map<std::string, V4L2IntegerControl*> integer_controls_;
+  std::map<std::string, V4L2BooleanControl*> bool_controls_;
+  std::map<std::string, V4L2MenuControl*> menu_controls_;
+  std::map<std::string, V4L2ButtonControl*> button_controls_;
 
   explicit MainWindow(QWidget *parent = 0, const char *name = 0);
   void add_control(const struct v4l2_queryctrl &ctrl, int fd, QWidget *parent, QGridLayout *);
+
+  void integerControlCallback(const std_msgs::Int32::ConstPtr& msg, std::string name);
+  void boolControlCallback(const std_msgs::Int32::ConstPtr& msg, std::string name);
+  void menuControlCallback(const std_msgs::Int32::ConstPtr& msg, std::string name);
+  void buttonControlCallback(const std_msgs::Int32::ConstPtr& msg, std::string name);
 };
 
 #endif  // V4L2UCP_MAINWINDOW_H
