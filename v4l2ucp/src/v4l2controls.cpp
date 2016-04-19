@@ -234,6 +234,7 @@ V4L2IntegerControl::V4L2IntegerControl
 
 void V4L2IntegerControl::setValue(int val)
 {
+  ROS_INFO_STREAM(val);
   if (val < minimum)
     val = minimum;
   if (val > maximum)

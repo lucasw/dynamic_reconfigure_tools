@@ -356,6 +356,8 @@ void MainWindow::add_control(const struct v4l2_queryctrl &ctrl, int fd, QWidget 
 void MainWindow::integerControlCallback(
     const std_msgs::Int32::ConstPtr& msg, std::string name)
 {
+  // The ui is overriding this control immediately after it is set
+  // need to set the slider to this value.
   ROS_INFO_STREAM("integer " << name << " " << msg->data);
   integer_controls_[name]->setValue(msg->data);
 }
