@@ -77,7 +77,7 @@ MainWindow::MainWindow(QWidget *parent, const char *name) :
   {
     updateActions[i]->setCheckable(true);
   }
-  updateActions[0]->setChecked(true);
+  updateActions[1]->setChecked(true);
 
   menu = new QMenu(this);
   menu->addAction("Configure preview...", this, SLOT(configurePreview()));
@@ -92,6 +92,7 @@ MainWindow::MainWindow(QWidget *parent, const char *name) :
   menuBar()->addMenu(menu);
 
   QObject::connect(&timer, SIGNAL(timeout()), this, SLOT(timerShot()));
+  update1Sec();
 }
 
 void MainWindow::fileOpen()
@@ -286,25 +287,25 @@ void MainWindow::add_control(const struct v4l2_queryctrl &ctrl, int fd, QWidget 
   case V4L2_CTRL_TYPE_INTEGER:
     integer_controls_[name] = new V4L2IntegerControl(fd, ctrl, parent, this);
     w = integer_controls_[name];
-    sub_[name] = nh_.subscribe<std_msgs::Int32>("controls/" + name, 1,
+    sub_[name] = nh_.subscribe<std_msgs::Int32>("controls/" + name, 10,
       boost::bind(&MainWindow::integerControlCallback, this, _1, name));
     break;
   case V4L2_CTRL_TYPE_BOOLEAN:
     bool_controls_[name] = new V4L2BooleanControl(fd, ctrl, parent, this);
     w = bool_controls_[name];
-    sub_[name] = nh_.subscribe<std_msgs::Int32>("controls/" + name, 1,
+    sub_[name] = nh_.subscribe<std_msgs::Int32>("controls/" + name, 10,
       boost::bind(&MainWindow::boolControlCallback, this, _1, name));
     break;
   case V4L2_CTRL_TYPE_MENU:
     menu_controls_[name] = new V4L2MenuControl(fd, ctrl, parent, this);
     w = menu_controls_[name];
-    sub_[name] = nh_.subscribe<std_msgs::Int32>("controls/" + name, 1,
+    sub_[name] = nh_.subscribe<std_msgs::Int32>("controls/" + name, 10,
       boost::bind(&MainWindow::menuControlCallback, this, _1, name));
     break;
   case V4L2_CTRL_TYPE_BUTTON:
     button_controls_[name] = new V4L2ButtonControl(fd, ctrl, parent, this);
     w = button_controls_[name];
-    sub_[name] = nh_.subscribe<std_msgs::Int32>("controls/" + name, 1,
+    sub_[name] = nh_.subscribe<std_msgs::Int32>("controls/" + name, 10,
       boost::bind(&MainWindow::buttonControlCallback, this, _1, name));
     break;
   case V4L2_CTRL_TYPE_INTEGER64:
@@ -478,6 +479,10 @@ void MainWindow::update30Sec()
 void MainWindow::timerShot()
 {
   emit(updateNow());
+  if (!ros::ok())
+    closeEvent(NULL);
+  // ROS_INFO_STREAM("update");
+  ros::spinOnce();
 }
 
 void MainWindow::startPreview()
