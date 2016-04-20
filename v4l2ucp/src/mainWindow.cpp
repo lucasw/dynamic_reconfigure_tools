@@ -480,11 +480,11 @@ void MainWindow::update30Sec()
 
 void MainWindow::timerShot()
 {
+  ros::spinOnce();
   emit(updateNow());
   if (!ros::ok())
     closeEvent(NULL);
   // ROS_INFO_STREAM("update");
-  ros::spinOnce();
 }
 
 void MainWindow::startPreview()

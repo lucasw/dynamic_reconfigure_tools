@@ -183,7 +183,10 @@ void V4L2Control::updateStatus(bool hwChanged)
   {
     cacheValue(c);
     if (c.value != getValue())
-      setValue(c.value);
+    {
+      // ROS_INFO_STREAM(name << " setting value from cache " << getValue() << " to " << c.value);
+      // setValue(c.value);
+    }
   }
 }
 
@@ -234,7 +237,7 @@ V4L2IntegerControl::V4L2IntegerControl
 
 void V4L2IntegerControl::setValue(int val)
 {
-  ROS_INFO_STREAM(val);
+  ROS_INFO_STREAM(name << " " << val);
   if (val < minimum)
     val = minimum;
   if (val > maximum)
@@ -251,6 +254,8 @@ void V4L2IntegerControl::setValue(int val)
       val -= mod;
     }
   }
+  updateHardware();
+
   QString str;
   str.setNum(val);
   le->setText(str);
