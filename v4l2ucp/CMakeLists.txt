@@ -7,9 +7,6 @@ project(v4l2ucp)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   roslint
-  rospy
-  rqt_gui
-  rqt_gui_cpp
   std_msgs
 )
 
@@ -29,7 +26,6 @@ roslint_cpp()
 set(V4L2UCP_VERSION 2.0.2)
 add_definitions(-Wall -DV4L2UCP_VERSION="${V4L2UCP_VERSION}")
 find_package(Qt4 REQUIRED)
-include( ${QT_USE_FILE} )
 
 find_library(V4L2_LIBRARY v4l2)
 if (V4L2_LIBRARY)
@@ -131,20 +127,13 @@ catkin_package(
 
 set(SOURCES
     src/mainWindow.cpp
-    src/previewSettings.cpp
     src/v4l2controls.cpp
     src/v4l2ucp.cpp
 )
 set(HEADERS
   include/v4l2ucp/mainWindow.h
-  include/v4l2ucp/previewSettings.h
   include/v4l2ucp/v4l2controls.h
 )
-set(UI_FILES resources/previewSettings.ui)
-set(RCS resources/v4l2ucp.qrc)
-qt4_wrap_cpp(MOC_SOURCES ${HEADERS})
-qt4_wrap_ui(UI_HEADERS ${UI_FILES})
-qt4_add_resources(RC_SOURCES ${RCS})
 
 
 ## Specify additional locations of header files
@@ -167,7 +156,7 @@ include_directories(
 # add_dependencies(v4l2ucp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(v4l2ucp ${SOURCES} ${MOC_SOURCES} ${UI_HEADERS} ${RC_SOURCES})
+add_executable(v4l2ucp ${SOURCES})
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -175,7 +164,6 @@ add_executable(v4l2ucp ${SOURCES} ${MOC_SOURCES} ${UI_HEADERS} ${RC_SOURCES})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(v4l2ucp
-    ${QT_LIBRARIES}
     ${V4L2_LIBRARY}
     ${catkin_LIBRARIES}
 )

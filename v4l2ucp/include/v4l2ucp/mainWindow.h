@@ -19,49 +19,21 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
  */
-#include <QMainWindow>
-#include <QTimer>
-#include <QMenu>
-#include <QGridLayout>
-#include <QProcess>
 #include <ros/ros.h>
 #include <std_msgs/Int32.h>
 #include "v4l2ucp/v4l2controls.h"
 
-class MainWindow : public QMainWindow
+class MainWindow
 {
-  Q_OBJECT
-
-public slots:
-  void fileOpen();
-  void updateDisabled();
-  void update1Sec();
-  void update5Sec();
-  void update10Sec();
-  void update20Sec();
-  void update30Sec();
-  void timerShot();
-  void about();
-  void aboutQt();
-  void startPreview();
-  void configurePreview();
-  void previewProcError(QProcess::ProcessError er);
-  void previewFinished(int exitCode, QProcess::ExitStatus status);
-
-signals:
-  void updateNow();
-
 public:
-  static MainWindow* openFile(const std::string fileName);
+  MainWindow();
   ~MainWindow();
 
+  void about();
+
 private:
-  QMenu *updateMenu, *resetMenu;
   int fd;
-  QAction *resetAllId;
-  QAction *updateActions[6];
-  QTimer timer;
-  QProcess *previewProcess;
+  // QTimer timer;
   ros::NodeHandle nh_;
   std::map<std::string, ros::Subscriber> sub_;
 
@@ -70,8 +42,7 @@ private:
   std::map<std::string, V4L2MenuControl*> menu_controls_;
   std::map<std::string, V4L2ButtonControl*> button_controls_;
 
-  explicit MainWindow(QWidget *parent = 0, const char *name = 0);
-  void add_control(const struct v4l2_queryctrl &ctrl, int fd, QWidget *parent, QGridLayout *);
+  void add_control(const struct v4l2_queryctrl &ctrl, int fd);
 
   void integerControlCallback(const std_msgs::Int32::ConstPtr& msg, std::string name);
   void boolControlCallback(const std_msgs::Int32::ConstPtr& msg, std::string name);

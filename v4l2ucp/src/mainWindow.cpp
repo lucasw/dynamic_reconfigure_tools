@@ -18,17 +18,6 @@
 
  */
 
-#include <QApplication>
-#include <QFileDialog>
-#include <QLabel>
-#include <QMenu>
-#include <QMenuBar>
-#include <QMessageBox>
-#include <QPushButton>
-#include <QScrollArea>
-#include <QSettings>
-#include <QString>
-#include <QTimer>
 #include <cerrno>
 #include <cstring>
 #include <fcntl.h>
@@ -38,161 +27,36 @@
 #include <sys/ioctl.h>
 
 #include "v4l2ucp/mainWindow.h"
-#include "v4l2ucp/previewSettings.h"
 
-MainWindow::MainWindow(QWidget *parent, const char *name) :
-  QMainWindow(parent),
-  fd(-1),
-  previewProcess(NULL)
+MainWindow::MainWindow() :
+  fd(-1)
 {
-  setWindowTitle(name);
-  setWindowIcon(QIcon(":/v4l2ucp.png"));
-  QMenu *menu = new QMenu(this);
-  menu->addAction("&Open", this, SLOT(fileOpen()), Qt::CTRL + Qt::Key_O);
-  menu->addAction("&Close", this, SLOT(close()), Qt::CTRL + Qt::Key_W);
-  menu->addSeparator();
-  menu->addAction("E&xit", qApp, SLOT(quit()), Qt::CTRL + Qt::Key_Q);
-  menu->setTitle("&File");
-  menuBar()->addMenu(menu);
+  std::string device = "/dev/video0";
+  ros::param::get("~device", device);
 
-  menu = new QMenu(this);
-  resetAllId = menu->addAction("&All");
-  resetMenu = menu;
-  menu->setTitle("&Reset");
-  menuBar()->addMenu(menu);
-
-  menu = new QMenu(this);
-  updateActions[0] = menu->addAction("Disabled", this, SLOT(updateDisabled()));
-  menu->addSeparator();
-  updateActions[1] = menu->addAction("1 sec", this, SLOT(update1Sec()));
-  updateActions[2] = menu->addAction("5 sec", this, SLOT(update5Sec()));
-  updateActions[3] = menu->addAction("10 sec", this, SLOT(update10Sec()));
-  updateActions[4] = menu->addAction("20 sec", this, SLOT(update20Sec()));
-  updateActions[5] = menu->addAction("30 sec", this, SLOT(update30Sec()));
-  menu->addSeparator();
-  menu->addAction("Update now", this, SLOT(timerShot()));
-  menu->setTitle("&Update");
-  menuBar()->addMenu(menu);
-  for (int i = 0; i < 6; i++)
-  {
-    updateActions[i]->setCheckable(true);
-  }
-  updateActions[1]->setChecked(true);
-
-  menu = new QMenu(this);
-  menu->addAction("Configure preview...", this, SLOT(configurePreview()));
-  menu->addAction("Start preview", this, SLOT(startPreview()));
-  menu->setTitle("Preview");
-  menuBar()->addMenu(menu);
-
-  menu = new QMenu(this);
-  menu->addAction("&About", this, SLOT(about()));
-  menu->addAction("About &Qt", this, SLOT(aboutQt()));
-  menu->setTitle("&Help");
-  menuBar()->addMenu(menu);
-
-  QObject::connect(&timer, SIGNAL(timeout()), this, SLOT(timerShot()));
-  update1Sec();
-}
-
-void MainWindow::fileOpen()
-{
-  QString newfilename = QFileDialog::getOpenFileName(this,
-                        "Select V4L2 device",
-                        "/dev",
-                        "V4L2 Devices (video* vout* vbi* radio*);;"
-                        "Video Capture (video*);;"
-                        "Video Output (vout*);;"
-                        "VBI (vbi*);;"
-                        "Radio (radio*);;"
-                        "All (*)");
-  if (!newfilename.isEmpty())
-  {
-    MainWindow *w = openFile(std::string(newfilename.toUtf8()));
-    if (w)
-      w->show();
-  }
-}
-
-MainWindow *MainWindow::openFile(const std::string fileName)
-{
-  int fd = v4l2_open(fileName.c_str(), O_RDWR, 0);
+  fd = v4l2_open(device.c_str(), O_RDWR, 0);
   if (fd < 0)
   {
-    QString msg;
-    msg.sprintf("Unable to open file %s\n%s", fileName.c_str(), strerror(errno));
-    QMessageBox::warning(NULL, "v4l2ucp: Unable to open file", msg, "OK");
-    return NULL;
+    ROS_ERROR_STREAM("v4l2ucp: Unable to open file" << device << " "
+        << strerror(errno));
+    return;
   }
 
   struct v4l2_capability cap;
   if (v4l2_ioctl(fd, VIDIOC_QUERYCAP, &cap) == -1)
   {
-    QString msg;
-    msg.sprintf("%s is not a V4L2 device", fileName.c_str());
-    QMessageBox::warning(NULL, "v4l2ucp: Not a V4L2 device", msg, "OK");
-    return NULL;
+    ROS_ERROR_STREAM("v4l2ucp: Not a V4L2 device" << device);
+    return;
   }
 
-  MainWindow *mw = new MainWindow();
-  mw->fd = fd;
-  QString str("v4l2ucp - ");
-  str.append(fileName.c_str());
-  mw->setWindowTitle(str);
+  ROS_INFO_STREAM(cap.driver);
+  ROS_INFO_STREAM(cap.card);
+  ROS_INFO_STREAM(cap.bus_info);
 
-  QWidget *grid = new QWidget(mw);
-  QGridLayout *gridLayout = new QGridLayout();
-  grid->setLayout(gridLayout);
+  ROS_INFO_STREAM((cap.version >> 16) << "." << ((cap.version >> 8) & 0xff) << "."
+              << (cap.version & 0xff));
 
-  QLabel *l = new QLabel("driver", grid);
-  gridLayout->addWidget(l, 0, 0);
-  l = new QLabel((const char *)cap.driver, grid);
-  gridLayout->addWidget(l, 0, 1);
-  l = new QLabel(grid);
-  gridLayout->addWidget(l, 0, 2);
-  l = new QLabel(grid);
-  gridLayout->addWidget(l, 0, 3);
-
-  l = new QLabel("card", grid);
-  gridLayout->addWidget(l);
-  l = new QLabel((const char *)cap.card, grid);
-  gridLayout->addWidget(l);
-  l = new QLabel(grid);
-  gridLayout->addWidget(l);
-  l = new QLabel(grid);
-  gridLayout->addWidget(l);
-
-  l = new QLabel("bus_info", grid);
-  gridLayout->addWidget(l);
-  l = new QLabel((const char *)cap.bus_info, grid);
-  gridLayout->addWidget(l);
-  l = new QLabel(grid);
-  gridLayout->addWidget(l);
-  l = new QLabel(grid);
-  gridLayout->addWidget(l);
-
-
-  str.sprintf("%d.%d.%d", cap.version >> 16, (cap.version >> 8) & 0xff,
-              cap.version & 0xff);
-  l = new QLabel("version", grid);
-  gridLayout->addWidget(l);
-  l = new QLabel(str, grid);
-  gridLayout->addWidget(l);
-  l = new QLabel(grid);
-  gridLayout->addWidget(l);
-  l = new QLabel(grid);
-  gridLayout->addWidget(l);
-
-  str.sprintf("0x%08x", cap.capabilities);
-  l = new QLabel("capabilities", grid);
-  gridLayout->addWidget(l);
-  l = new QLabel(str, grid);
-  gridLayout->addWidget(l);
-  l = new QLabel(grid);
-  gridLayout->addWidget(l);
-  l = new QLabel(grid);
-  gridLayout->addWidget(l);
-
+  ROS_INFO_STREAM("0x" << std::hex << cap.capabilities);
 
   struct v4l2_queryctrl ctrl;
 #ifdef V4L2_CTRL_FLAG_NEXT_CTRL
@@ -202,7 +66,7 @@ MainWindow *MainWindow::openFile(const std::string fileName)
   {
     do
     {
-      mw->add_control(ctrl, fd, grid, gridLayout);
+      add_control(ctrl, fd);
       ctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
     }
     while (0 == v4l2_ioctl(fd, VIDIOC_QUERYCTRL, &ctrl));
@@ -217,7 +81,7 @@ MainWindow *MainWindow::openFile(const std::string fileName)
       ctrl.id = i;
       if (v4l2_ioctl(fd, VIDIOC_QUERYCTRL, &ctrl) == 0)
       {
-        mw->add_control(ctrl, fd, grid, gridLayout);
+        add_control(ctrl, fd);
       }
     }
 
@@ -227,7 +91,7 @@ MainWindow *MainWindow::openFile(const std::string fileName)
       ctrl.id = i;
       if (v4l2_ioctl(fd, VIDIOC_QUERYCTRL, &ctrl) == 0)
       {
-        mw->add_control(ctrl, fd, grid, gridLayout);
+        add_control(ctrl, fd);
       }
       else
       {
@@ -235,14 +99,6 @@ MainWindow *MainWindow::openFile(const std::string fileName)
       }
     }
   }
-
-  QScrollArea *sv = new QScrollArea(mw);
-  sv->setWidget(grid);
-  sv->setBackgroundRole(QPalette::Light);
-  sv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-  mw->setCentralWidget(sv);
-  mw->setVisible(true);
-  return mw;
 }
 
 MainWindow::~MainWindow()
@@ -256,7 +112,7 @@ bool not_alnum(char s)
   return not std::isalnum(s);
 }
 
-void MainWindow::add_control(const struct v4l2_queryctrl &ctrl, int fd, QWidget *parent, QGridLayout *layout)
+void MainWindow::add_control(const struct v4l2_queryctrl &ctrl, int fd)
 {
   std::stringstream name_ss;
   name_ss << ctrl.name;
@@ -278,30 +134,27 @@ void MainWindow::add_control(const struct v4l2_queryctrl &ctrl, int fd, QWidget 
   if (ctrl.flags & V4L2_CTRL_FLAG_DISABLED)
     return;
 
-  QLabel *l = new QLabel((const char *)ctrl.name, parent);
-  layout->addWidget(l);
-
   switch (ctrl.type)
   {
   case V4L2_CTRL_TYPE_INTEGER:
     integer_controls_[name] = new V4L2IntegerControl(fd, ctrl, this);
     sub_[name] = nh_.subscribe<std_msgs::Int32>("controls/" + name, 10,
-      boost::bind(&MainWindow::integerControlCallback, this, _1, name));
+        boost::bind(&MainWindow::integerControlCallback, this, _1, name));
     break;
   case V4L2_CTRL_TYPE_BOOLEAN:
     bool_controls_[name] = new V4L2BooleanControl(fd, ctrl, this);
     sub_[name] = nh_.subscribe<std_msgs::Int32>("controls/" + name, 10,
-      boost::bind(&MainWindow::boolControlCallback, this, _1, name));
+        boost::bind(&MainWindow::boolControlCallback, this, _1, name));
     break;
   case V4L2_CTRL_TYPE_MENU:
     menu_controls_[name] = new V4L2MenuControl(fd, ctrl, this);
     sub_[name] = nh_.subscribe<std_msgs::Int32>("controls/" + name, 10,
-      boost::bind(&MainWindow::menuControlCallback, this, _1, name));
+        boost::bind(&MainWindow::menuControlCallback, this, _1, name));
     break;
   case V4L2_CTRL_TYPE_BUTTON:
     button_controls_[name] = new V4L2ButtonControl(fd, ctrl, this);
     sub_[name] = nh_.subscribe<std_msgs::Int32>("controls/" + name, 10,
-      boost::bind(&MainWindow::buttonControlCallback, this, _1, name));
+        boost::bind(&MainWindow::buttonControlCallback, this, _1, name));
     break;
   case V4L2_CTRL_TYPE_INTEGER64:
   case V4L2_CTRL_TYPE_CTRL_CLASS:
@@ -329,20 +182,15 @@ void MainWindow::add_control(const struct v4l2_queryctrl &ctrl, int fd, QWidget 
     // w->setEnabled(false);
   }
 
-  QPushButton *pb;
-  pb = new QPushButton("Update", parent);
-  layout->addWidget(pb);
 
   if (ctrl.type == V4L2_CTRL_TYPE_BUTTON)
   {
-    l = new QLabel(parent);
-    layout->addWidget(l);
   }
   else
   {
-    pb = new QPushButton("Reset", parent);
-    layout->addWidget(pb);
   }
+
+  // TODO(lucasw) have a ros timer that updates the values from hardware
 }
 
 void MainWindow::integerControlCallback(
@@ -375,8 +223,7 @@ void MainWindow::buttonControlCallback(
 
 void MainWindow::about()
 {
-  QMessageBox::about(this, "About", "v4l2ucp Version "V4L2UCP_VERSION"\n\n"
-                     "This application is a port of an original v4l2ucp to Qt4 library,\n"
+  std::string about ="This application is a port of an original v4l2ucp to Qt4 library,\n"
                      "v4l2ucp is a universal control panel for all V4L2 devices. The\n"
                      "controls come directly from the driver. If they cause problems\n"
                      "with your hardware, please contact the maintainer of the driver.\n\n"
@@ -392,200 +239,7 @@ void MainWindow::about()
                      "GNU General Public License for more details.\n\n"
                      "You should have received a copy of the GNU General Public License\n"
                      "along with this program; if not, write to the Free Software\n"
-                     "Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA\n");
-}
+                     "Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA\n";
 
-void MainWindow::aboutQt()
-{
-  QMessageBox::aboutQt(this);
-}
-
-void MainWindow::updateDisabled()
-{
-  for (int i = 0; i < 6; i++)
-  {
-    updateActions[i]->setChecked(false);
-  }
-  updateActions[0]->setChecked(true);
-  timer.stop();
-}
-
-void MainWindow::update1Sec()
-{
-  for (int i = 0; i < 6; i++)
-  {
-    updateActions[i]->setChecked(false);
-  }
-  updateActions[1]->setChecked(true);
-  timer.stop();
-  timer.setInterval(1000);
-  timer.start();
-}
-
-void MainWindow::update5Sec()
-{
-  for (int i = 0; i < 6; i++)
-  {
-    updateActions[i]->setChecked(false);
-  }
-  updateActions[2]->setChecked(true);
-  timer.stop();
-  timer.setInterval(5000);
-  timer.start();
-}
-
-void MainWindow::update10Sec()
-{
-  for (int i = 0; i < 6; i++)
-  {
-    updateActions[i]->setChecked(false);
-  }
-  updateActions[3]->setChecked(true);
-  timer.stop();
-  timer.setInterval(10000);
-  timer.start();
-}
-
-void MainWindow::update20Sec()
-{
-  for (int i = 0; i < 6; i++)
-  {
-    updateActions[i]->setChecked(false);
-  }
-  updateActions[4]->setChecked(true);
-  timer.stop();
-  timer.setInterval(20000);
-  timer.start();
-}
-
-void MainWindow::update30Sec()
-{
-  for (int i = 0; i < 6; i++)
-  {
-    updateActions[i]->setChecked(false);
-  }
-  updateActions[5]->setChecked(true);
-  timer.stop();
-  timer.setInterval(30000);
-  timer.start();
-}
-
-void MainWindow::timerShot()
-{
-  ros::spinOnce();
-  emit(updateNow());
-  if (!ros::ok())
-    closeEvent(NULL);
-  // ROS_INFO_STREAM("update");
-}
-
-void MainWindow::startPreview()
-{
-  if (previewProcess && previewProcess->state() != QProcess::NotRunning)
-  {
-    QMessageBox::warning(NULL, "v4l2ucp: warning", "Preview process is already started", "OK");
-    return;
-  }
-
-  if (!previewProcess)
-  {
-    previewProcess = new QProcess(this);
-    QObject::connect(previewProcess, SIGNAL(error(QProcess::ProcessError)),
-                     this, SLOT(previewProcError(QProcess::ProcessError)));
-    QObject::connect(previewProcess, SIGNAL(finished(int, QProcess::ExitStatus)),
-                     this, SLOT(previewFinished(int, QProcess::ExitStatus)));
-  }
-
-  QString appBinaryName = "mplayer";
-  QSettings settings(APP_ORG, APP_NAME);
-  if (settings.contains(SETTINGS_APP_BINARY_NAME))
-  {
-    appBinaryName = settings.value(SETTINGS_APP_BINARY_NAME).toString();
-  }
-
-  QStringList env = QProcess::systemEnvironment();
-  if (settings.contains(SETTINGS_ENV_LIST))
-  {
-    QList<QVariant> envList = settings.value(SETTINGS_ENV_LIST).toList();
-    QList<QVariant>::iterator begin, end;
-    for (begin = envList.begin(),
-         end = envList.end(); begin != end; begin++)
-    {
-      env << (*begin).toString();
-    }
-  }
-  else
-  {
-    env << "LD_PRELOAD=/usr/lib/libv4l/v4l2convert.so";
-  }
-
-  QStringList args;
-  if (settings.contains(SETTINGS_ARG_LIST))
-  {
-    QList<QVariant> argList = settings.value(SETTINGS_ARG_LIST).toList();
-    QList<QVariant>::iterator begin, end;
-    for (begin = argList.begin(),
-         end = argList.end(); begin != end; begin++)
-    {
-      QString arg = (*begin).toString();
-      if (arg.contains(' '))
-      {
-        QStringList splittedArg = arg.split(' ');
-        args << splittedArg;
-      }
-      else
-      {
-        args << arg;
-      }
-    }
-  }
-  else
-  {
-    args << "tv://";
-  }
-
-  previewProcess->setEnvironment(env);
-  previewProcess->start(appBinaryName, args);
-}
-
-void MainWindow::configurePreview()
-{
-  PreviewSettingsDialog dialog;
-  int res = dialog.exec();
-  if (res == QDialog::Accepted)
-  {
-    dialog.saveSettings();
-  }
-}
-
-void MainWindow::previewProcError(QProcess::ProcessError er)
-{
-  switch (er)
-  {
-  case QProcess::FailedToStart:
-    QMessageBox::critical(NULL, "v4l2ucp", "Failed to start preview process!", "OK");
-    break;
-  case QProcess::Crashed:
-    QMessageBox::critical(NULL, "v4l2ucp", "Preview process crashed!", "OK");
-    break;
-  default:
-    break;
-  }
-}
-
-void MainWindow::previewFinished(int exitCode, QProcess::ExitStatus status)
-{
-  switch (status)
-  {
-  case QProcess::CrashExit:
-    break;
-  case QProcess::NormalExit:
-    if (exitCode != 0)
-    {
-      QMessageBox::critical(NULL, "v4l2ucp", "Preview process exited with code != 0", "OK");
-    }
-    break;
-  default:
-    break;
-  }
+  // ROS_INFO_STREAM("v4l2ucp Version " << V4L2UCP_VERSION << about);
 }

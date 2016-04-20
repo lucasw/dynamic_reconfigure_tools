@@ -148,8 +148,7 @@ void V4L2Control::updateStatus(bool hwChanged)
     // setEnabled(!(ctrl.flags & (V4L2_CTRL_FLAG_GRABBED | V4L2_CTRL_FLAG_READ_ONLY | V4L2_CTRL_FLAG_INACTIVE)));
   }
 
-  if (hwChanged && (ctrl.flags & V4L2_CTRL_FLAG_UPDATE))
-    mw->timerShot();
+  // if (hwChanged && (ctrl.flags & V4L2_CTRL_FLAG_UPDATE))
 
 #ifdef V4L2_CTRL_FLAG_WRITE_ONLY
   if (ctrl.flags & V4L2_CTRL_FLAG_WRITE_ONLY)

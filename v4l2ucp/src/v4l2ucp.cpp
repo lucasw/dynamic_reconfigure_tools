@@ -21,25 +21,12 @@
 #include <cstring>
 #include <iostream>
 #include <ros/ros.h>
-#include <QApplication>
 
 #include "v4l2ucp/mainWindow.h"
 
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "v4l2ucp");
-  MainWindow *w;
-  QApplication a(argc, argv);
-
-  std::string device = "/dev/video0";
-  ros::param::get("~device", device);
-
-  w = MainWindow::openFile(device);
-  if (w)
-  {
-    w->show();
-  }
-
-  a.connect(&a, SIGNAL(lastWindowClosed()), &a, SLOT(quit()));
-  return a.exec();
+  MainWindow main_window;
+  ros::spin();
 }
