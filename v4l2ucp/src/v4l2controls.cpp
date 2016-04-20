@@ -22,11 +22,6 @@
 #include <cstring>
 #include <libv4l2.h>
 
-#include <QPushButton>
-#include <QLabel>
-#include <QValidator>
-#include <QMessageBox>
-
 #include "v4l2ucp/mainWindow.h"
 #include "v4l2ucp/v4l2controls.h"
 
@@ -36,13 +31,12 @@ int V4L2Control::hue_auto = 0;
 int V4L2Control::whitebalance_auto = 0;
 
 V4L2Control::V4L2Control(int fd, const struct v4l2_queryctrl &ctrl,
-                         QWidget *parent, MainWindow *mw) :
-  QWidget(parent), cid(ctrl.id), default_value(ctrl.default_value), mw(mw)
+                         MainWindow *mw) :
+  cid(ctrl.id), default_value(ctrl.default_value), mw(mw)
 {
   this->fd = fd;
   strncpy(name, (const char *)ctrl.name, sizeof(name));
   name[sizeof(name) - 1] = '\0';
-  this->setLayout(&layout);
 }
 
 void V4L2Control::cacheValue(const struct v4l2_control &c)
@@ -133,9 +127,7 @@ void V4L2Control::updateHardware()
   c.value = getValue();
   if (v4l2_ioctl(fd, VIDIOC_S_CTRL, &c) == -1)
   {
-    QString msg;
-    msg.sprintf("Unable to set %s\n%s", name, strerror(errno));
-    QMessageBox::warning(this, "Unable to set control", msg, "OK");
+    ROS_ERROR_STREAM(name << " Unable to set control" << strerror(errno));
     updateStatus(false);
   }
   else
@@ -148,15 +140,12 @@ void V4L2Control::updateStatus(bool hwChanged)
   ctrl.id = cid;
   if (v4l2_ioctl(fd, VIDIOC_QUERYCTRL, &ctrl) == -1)
   {
-    QString msg;
-    msg.sprintf("Unable to get the status of %s\n%s", name,
-                strerror(errno));
-    QMessageBox::warning(this, "Unable to get control status", msg, "OK");
+    ROS_ERROR_STREAM("Unable to get control status " << strerror(errno));
   }
   else
   {
     queryCleanup(&ctrl);
-    setEnabled(!(ctrl.flags & (V4L2_CTRL_FLAG_GRABBED | V4L2_CTRL_FLAG_READ_ONLY | V4L2_CTRL_FLAG_INACTIVE)));
+    // setEnabled(!(ctrl.flags & (V4L2_CTRL_FLAG_GRABBED | V4L2_CTRL_FLAG_READ_ONLY | V4L2_CTRL_FLAG_INACTIVE)));
   }
 
   if (hwChanged && (ctrl.flags & V4L2_CTRL_FLAG_UPDATE))
@@ -174,10 +163,7 @@ void V4L2Control::updateStatus(bool hwChanged)
   c.id = cid;
   if (v4l2_ioctl(fd, VIDIOC_G_CTRL, &c) == -1)
   {
-    QString msg;
-    msg.sprintf("Unable to get %s\n%s", name,
-                strerror(errno));
-    QMessageBox::warning(this, "Unable to get control", msg, "OK");
+    ROS_ERROR_STREAM(name << " Unable to get control " << strerror(errno));
   }
   else
   {
@@ -192,21 +178,19 @@ void V4L2Control::updateStatus(bool hwChanged)
 
 void V4L2Control::resetToDefault()
 {
-  if (isEnabled())
-  {
-    setValue(default_value);
-    updateHardware();
-  }
+  setValue(default_value);
 }
 
 /*
  * V4L2IntegerControl
  */
 V4L2IntegerControl::V4L2IntegerControl
-(int fd, const struct v4l2_queryctrl &ctrl, QWidget *parent, MainWindow *mw) :
-  V4L2Control(fd, ctrl, parent, mw),
+(int fd, const struct v4l2_queryctrl &ctrl,
+    MainWindow *mw) :
+  V4L2Control(fd, ctrl, mw),
   minimum(ctrl.minimum), maximum(ctrl.maximum), step(ctrl.step)
 {
+  #if 0
   int pageStep = (maximum - minimum) / 10;
   if (step > pageStep)
     pageStep = step;
@@ -216,22 +200,14 @@ V4L2IntegerControl::V4L2IntegerControl
   sl->setPageStep(pageStep);
   sl->setValue(default_value);
   // sl->setLineStep(step);
-  sl->setVisible(true);
-  this->layout.addWidget(sl);
 
   QString defStr;
   defStr.setNum(default_value);
   le = new QLineEdit(this);
   le->setText(defStr);
   le->setValidator(new QIntValidator(minimum, maximum, this));
-  this->layout.addWidget(le);
+  #endif
 
-  QObject::connect(sl, SIGNAL(valueChanged(int)),
-                   this, SLOT(SetValueFromSlider()));
-  QObject::connect(sl, SIGNAL(sliderReleased()),
-                   this, SLOT(SetValueFromSlider()));
-  QObject::connect(le, SIGNAL(returnPressed()),
-                   this, SLOT(SetValueFromText()));
   updateStatus();
 }
 
@@ -254,75 +230,26 @@ void V4L2IntegerControl::setValue(int val)
       val -= mod;
     }
   }
-  updateHardware();
-
-  QString str;
-  str.setNum(val);
-  le->setText(str);
-
-  /* FIXME: find clean solution to prevent infinite loop */
-  sl->blockSignals(true);
-  sl->setValue(val);
-  sl->blockSignals(false);
-}
-
-int V4L2IntegerControl::getValue()
-{
-  return sl->value();
-}
-
-void V4L2IntegerControl::SetValueFromSlider()
-{
-  setValue(sl->value());
-  updateHardware();
-}
-
-void V4L2IntegerControl::SetValueFromText()
-{
-  if (le->hasAcceptableInput())
-  {
-    setValue(le->text().toInt());
-    updateHardware();
-  }
-  else
-  {
-    SetValueFromSlider();
-  }
+  V4L2Control::setValue(val);
 }
 
 /*
  * V4L2BooleanControl
  */
 V4L2BooleanControl::V4L2BooleanControl
-(int fd, const struct v4l2_queryctrl &ctrl, QWidget *parent, MainWindow *mw) :
-  V4L2Control(fd, ctrl, parent, mw),
-  cb(new QCheckBox(this))
+(int fd, const struct v4l2_queryctrl &ctrl, MainWindow *mw) :
+  V4L2Control(fd, ctrl, mw)
 {
-  this->layout.addWidget(cb);
-  QObject::connect(cb, SIGNAL(clicked()), this, SLOT(updateHardware()));
   updateStatus();
-}
-
-void V4L2BooleanControl::setValue(int val)
-{
-  cb->setChecked(val != 0);
-}
-
-int V4L2BooleanControl::getValue()
-{
-  return cb->isChecked();
 }
 
 /*
  * V4L2MenuControl
  */
 V4L2MenuControl::V4L2MenuControl
-(int fd, const struct v4l2_queryctrl &ctrl, QWidget *parent, MainWindow *mw) :
-  V4L2Control(fd, ctrl, parent, mw)
+(int fd, const struct v4l2_queryctrl &ctrl, MainWindow *mw) :
+  V4L2Control(fd, ctrl, mw)
 {
-  cb = new QComboBox(this);
-  this->layout.addWidget(cb);
-
   for (int i = ctrl.minimum; i <= ctrl.maximum; i++)
   {
     struct v4l2_querymenu qm;
@@ -330,51 +257,31 @@ V4L2MenuControl::V4L2MenuControl
     qm.index = i;
     if (v4l2_ioctl(fd, VIDIOC_QUERYMENU, &qm) == 0)
     {
-      cb->insertItem(i, (const char *)qm.name);
+      ROS_INFO_STREAM(name << " " << qm.name);
+      // cb->insertItem(i, (const char *)qm.name);
+      // TODO(lucasw) add menu item to ros params
     }
     else
     {
-      QString msg;
-      msg.sprintf("Unable to get menu item for %s, index=%d\n"
-                  "Will use Unknown", name, qm.index);
-      QMessageBox::warning(this, "Unable to get menu item", msg, "OK");
-      cb->insertItem(i, "Unknown");
+      ROS_ERROR_STREAM(name << " Unable to get menu item" << qm.index);
+      //cb->insertItem(i, "Unknown");
     }
   }
-  cb->setCurrentIndex(default_value);
-  QObject::connect(cb, SIGNAL(activated(int)),
-                   this, SLOT(menuActivated(int)));
+  // cb->setCurrentIndex(default_value);
   updateStatus();
-}
-
-void V4L2MenuControl::setValue(int val)
-{
-  cb->setCurrentIndex(val);
-}
-
-int V4L2MenuControl::getValue()
-{
-  return cb->currentIndex();
-}
-
-void V4L2MenuControl::menuActivated(int val)
-{
-  setValue(val);
-  updateHardware();
 }
 
 /*
  * V4L2ButtonControl
  */
 V4L2ButtonControl::V4L2ButtonControl
-(int fd, const struct v4l2_queryctrl &ctrl, QWidget *parent, MainWindow *mw) :
-  V4L2Control(fd, ctrl, parent, mw)
+(int fd, const struct v4l2_queryctrl &ctrl, MainWindow *mw) :
+  V4L2Control(fd, ctrl, mw)
 {
-  QPushButton *pb = new QPushButton((const char *)ctrl.name, this);
-  this->layout.addWidget(pb);
-  QObject::connect(pb, SIGNAL(clicked()), this, SLOT(updateHardware()));
+  updateStatus();
 }
 
-void V4L2ButtonControl::resetToDefault()
-{
-}
+// TODO(lucasw) maybe button isn't supposed to reset to default?
+// void V4L2ButtonControl::resetToDefault()
+// {
+// }

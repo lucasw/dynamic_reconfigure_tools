@@ -269,12 +269,11 @@ void MainWindow::add_control(const struct v4l2_queryctrl &ctrl, int fd, QWidget 
       (int(*)(int))not_alnum), name.end());
 
   // TODO(lucasw) clear out all other params under controls first
+  // a previous run would leave leftovers
   ros::param::set("controls/" + name, name_ss.str());
   ros::param::set("controls/" + name + "_min", ctrl.minimum);
   ros::param::set("controls/" + name + "_max", ctrl.maximum);
   ros::param::set("controls/" + name + "_type", int(ctrl.type));
-
-  QWidget *w = NULL;
 
   if (ctrl.flags & V4L2_CTRL_FLAG_DISABLED)
     return;
@@ -285,26 +284,22 @@ void MainWindow::add_control(const struct v4l2_queryctrl &ctrl, int fd, QWidget 
   switch (ctrl.type)
   {
   case V4L2_CTRL_TYPE_INTEGER:
-    integer_controls_[name] = new V4L2IntegerControl(fd, ctrl, parent, this);
-    w = integer_controls_[name];
+    integer_controls_[name] = new V4L2IntegerControl(fd, ctrl, this);
     sub_[name] = nh_.subscribe<std_msgs::Int32>("controls/" + name, 10,
       boost::bind(&MainWindow::integerControlCallback, this, _1, name));
     break;
   case V4L2_CTRL_TYPE_BOOLEAN:
-    bool_controls_[name] = new V4L2BooleanControl(fd, ctrl, parent, this);
-    w = bool_controls_[name];
+    bool_controls_[name] = new V4L2BooleanControl(fd, ctrl, this);
     sub_[name] = nh_.subscribe<std_msgs::Int32>("controls/" + name, 10,
       boost::bind(&MainWindow::boolControlCallback, this, _1, name));
     break;
   case V4L2_CTRL_TYPE_MENU:
-    menu_controls_[name] = new V4L2MenuControl(fd, ctrl, parent, this);
-    w = menu_controls_[name];
+    menu_controls_[name] = new V4L2MenuControl(fd, ctrl, this);
     sub_[name] = nh_.subscribe<std_msgs::Int32>("controls/" + name, 10,
       boost::bind(&MainWindow::menuControlCallback, this, _1, name));
     break;
   case V4L2_CTRL_TYPE_BUTTON:
-    button_controls_[name] = new V4L2ButtonControl(fd, ctrl, parent, this);
-    w = button_controls_[name];
+    button_controls_[name] = new V4L2ButtonControl(fd, ctrl, this);
     sub_[name] = nh_.subscribe<std_msgs::Int32>("controls/" + name, 10,
       boost::bind(&MainWindow::buttonControlCallback, this, _1, name));
     break;
@@ -315,6 +310,7 @@ void MainWindow::add_control(const struct v4l2_queryctrl &ctrl, int fd, QWidget 
   }
 
 
+  #if 0
   if (!w)
   {
     if (ctrl.type == V4L2_CTRL_TYPE_CTRL_CLASS)
@@ -326,18 +322,16 @@ void MainWindow::add_control(const struct v4l2_queryctrl &ctrl, int fd, QWidget 
     layout->addWidget(new QLabel(parent));
     return;
   }
+  #endif
 
-  layout->addWidget(w);
   if (ctrl.flags & (V4L2_CTRL_FLAG_GRABBED | V4L2_CTRL_FLAG_READ_ONLY | V4L2_CTRL_FLAG_INACTIVE))
   {
-    w->setEnabled(false);
+    // w->setEnabled(false);
   }
 
   QPushButton *pb;
   pb = new QPushButton("Update", parent);
   layout->addWidget(pb);
-  QObject::connect(pb, SIGNAL(clicked()), w, SLOT(updateStatus()));
-  QObject::connect(this, SIGNAL(updateNow()), w, SLOT(updateStatus()));
 
   if (ctrl.type == V4L2_CTRL_TYPE_BUTTON)
   {
@@ -348,8 +342,6 @@ void MainWindow::add_control(const struct v4l2_queryctrl &ctrl, int fd, QWidget 
   {
     pb = new QPushButton("Reset", parent);
     layout->addWidget(pb);
-    QObject::connect(pb, SIGNAL(clicked()), w, SLOT(resetToDefault()));
-    QObject::connect(resetAllId, SIGNAL(triggered(bool)), w, SLOT(resetToDefault()));
   }
 }
 

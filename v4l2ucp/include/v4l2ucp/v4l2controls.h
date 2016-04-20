@@ -28,36 +28,33 @@
 #define V4L2_CID_IRIS_RELATIVE      (V4L2_CID_CAMERA_CLASS_BASE+18)
 #endif
 
-#include <QHBoxLayout>
-#include <QCheckBox>
-#include <QSlider>
-#include <QComboBox>
-#include <QLineEdit>
-
 class MainWindow;
 
-class V4L2Control : public QWidget
+class V4L2Control
 {
-  Q_OBJECT
-public slots:
+public:
   void updateHardware();
   virtual void updateStatus(bool hwChanged = false);
   virtual void resetToDefault();
-  virtual void setValue(int val) = 0;
+  virtual void setValue(int val)
+  {
+    value_ = val;
+    updateHardware();
+  }
 
-public:
-  virtual int getValue() = 0;
+  virtual int getValue() { return value_; }
 
 protected:
-  V4L2Control(int fd, const struct v4l2_queryctrl &ctrl, QWidget *parent, MainWindow *mw);
+  V4L2Control(int fd, const struct v4l2_queryctrl &ctrl, MainWindow *mw);
   int fd;
   int cid;
   int default_value;
   char name[32];
-  QHBoxLayout layout;
 
 private:
   MainWindow *mw;
+
+  int value_;
 
   /* Not pretty we use these to keep track of the value of some special
      ctrls which impact the writability of other ctrls for queryCleanup(). */
@@ -74,78 +71,35 @@ private:
 
 class V4L2IntegerControl : public V4L2Control
 {
-  Q_OBJECT
 public:
-  V4L2IntegerControl(int fd, const struct v4l2_queryctrl &ctrl, QWidget *parent, MainWindow *mw);
+  V4L2IntegerControl(int fd, const struct v4l2_queryctrl &ctrl, MainWindow *mw);
 
-public slots:
   void setValue(int val);
-
-public:
-  int getValue();
-
-private slots:
-  void SetValueFromSlider(void);
-  void SetValueFromText(void);
 
 private:
   int minimum;
   int maximum;
   int step;
-  QSlider *sl;
-  QLineEdit *le;
 };
 
 class V4L2BooleanControl : public V4L2Control
 {
-  Q_OBJECT
 public:
-  V4L2BooleanControl(int fd, const struct v4l2_queryctrl &ctrl, QWidget *parent, MainWindow *mw);
-
-public slots:
-  void setValue(int val);
-
-public:
-  int getValue();
-
-private:
-  QCheckBox *cb;
+  V4L2BooleanControl(int fd, const struct v4l2_queryctrl &ctrl, MainWindow *mw);
 };
 
 class V4L2MenuControl : public V4L2Control
 {
-  Q_OBJECT
 public:
-  V4L2MenuControl(int fd, const struct v4l2_queryctrl &ctrl, QWidget *parent, MainWindow *mw);
-
-public slots:
-  void setValue(int val);
-
-public:
-  int getValue();
-
-private:
-  QComboBox *cb;
-
-private slots:
-  void menuActivated(int val);
+  V4L2MenuControl(int fd, const struct v4l2_queryctrl &ctrl, MainWindow *mw);
 };
 
 class V4L2ButtonControl : public V4L2Control
 {
-  Q_OBJECT
-public slots:
-  void resetToDefault();
-
 public:
-  V4L2ButtonControl(int fd, const struct v4l2_queryctrl &ctrl, QWidget *parent, MainWindow *mw);
+  // void resetToDefault();
 
-public slots:
-  void setValue(int val) {}
-  int getValue()
-  {
-    return 0;
-  };
+  V4L2ButtonControl(int fd, const struct v4l2_queryctrl &ctrl, MainWindow *mw);
 };
 
 #endif  // V4L2UCP_V4L2CONTROLS_H
