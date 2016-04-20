@@ -1,10 +1,12 @@
 import os
 import rospy
 
+from functools import partial
 from qt_gui.plugin import Plugin
 from python_qt_binding import loadUi
 from python_qt_binding.QtGui import QHBoxLayout, QLabel, QVBoxLayout, QSlider, QWidget
 from python_qt_binding import QtCore
+from std_msgs.msg import Int32
 
 class MyPlugin(Plugin):
 
@@ -49,6 +51,7 @@ class MyPlugin(Plugin):
         # TODO need to look through controls namespace params and create
         # control for them, put this in a function and allow refreshing
 
+        self.pubs = {}
         #rospy.loginfo(rospy.get_namespace())
         # TODO(lucasw) maybe this should be a pickled string instead
         # of a bunch of params?
@@ -71,6 +74,13 @@ class MyPlugin(Plugin):
                     slider = QSlider()
                     slider.setOrientation(QtCore.Qt.Horizontal)
                     hlayout.addWidget(slider)
+                    self.pubs[param] = rospy.Publisher(param,
+                            Int32, queue_size=2)
+                    slider.valueChanged.connect(partial(self.publish_value, param))
+
+    def publish_value(self, name, value):
+        # print name, value
+        self.pubs[name].publish(value)
 
     def shutdown_plugin(self):
         # TODO unregister all publishers here
