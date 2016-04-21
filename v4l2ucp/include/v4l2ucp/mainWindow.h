@@ -36,6 +36,7 @@ private:
   // QTimer timer;
   ros::NodeHandle nh_;
   std::map<std::string, ros::Subscriber> sub_;
+  std::map<std::string, ros::Publisher> pub_;
 
   std::map<std::string, V4L2IntegerControl*> integer_controls_;
   std::map<std::string, V4L2BooleanControl*> bool_controls_;

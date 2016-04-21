@@ -21,6 +21,7 @@
 #include <cerrno>
 #include <cstring>
 #include <libv4l2.h>
+#include <std_msgs/Int32.h>
 
 #include "v4l2ucp/mainWindow.h"
 #include "v4l2ucp/v4l2controls.h"
@@ -31,8 +32,10 @@ int V4L2Control::hue_auto = 0;
 int V4L2Control::whitebalance_auto = 0;
 
 V4L2Control::V4L2Control(int fd, const struct v4l2_queryctrl &ctrl,
-                         MainWindow *mw) :
-  cid(ctrl.id), default_value(ctrl.default_value), mw(mw)
+                         MainWindow *mw,
+                         ros::Publisher* pub) :
+  cid(ctrl.id), default_value(ctrl.default_value), mw(mw),
+  pub_(pub)
 {
   this->fd = fd;
   strncpy(name, (const char *)ctrl.name, sizeof(name));
@@ -167,6 +170,10 @@ void V4L2Control::updateStatus(bool hwChanged)
   else
   {
     cacheValue(c);
+    std_msgs::Int32 msg;
+    msg.data = c.value;
+    // TODO(lucasw) need to query hardware periodically to check on true values
+    pub_->publish(msg);
     if (c.value != getValue())
     {
       // ROS_INFO_STREAM(name << " setting value from cache " << getValue() << " to " << c.value);
@@ -185,8 +192,9 @@ void V4L2Control::resetToDefault()
  */
 V4L2IntegerControl::V4L2IntegerControl
 (int fd, const struct v4l2_queryctrl &ctrl,
-    MainWindow *mw) :
-  V4L2Control(fd, ctrl, mw),
+    MainWindow *mw,
+                         ros::Publisher* pub) :
+  V4L2Control(fd, ctrl, mw, pub),
   minimum(ctrl.minimum), maximum(ctrl.maximum), step(ctrl.step)
 {
   #if 0
@@ -236,8 +244,9 @@ void V4L2IntegerControl::setValue(int val)
  * V4L2BooleanControl
  */
 V4L2BooleanControl::V4L2BooleanControl
-(int fd, const struct v4l2_queryctrl &ctrl, MainWindow *mw) :
-  V4L2Control(fd, ctrl, mw)
+(int fd, const struct v4l2_queryctrl &ctrl, MainWindow *mw,
+                         ros::Publisher* pub) :
+  V4L2Control(fd, ctrl, mw, pub)
 {
   updateStatus();
 }
@@ -246,8 +255,9 @@ V4L2BooleanControl::V4L2BooleanControl
  * V4L2MenuControl
  */
 V4L2MenuControl::V4L2MenuControl
-(int fd, const struct v4l2_queryctrl &ctrl, MainWindow *mw) :
-  V4L2Control(fd, ctrl, mw)
+(int fd, const struct v4l2_queryctrl &ctrl, MainWindow *mw,
+                         ros::Publisher* pub) :
+  V4L2Control(fd, ctrl, mw, pub)
 {
   for (int i = ctrl.minimum; i <= ctrl.maximum; i++)
   {
@@ -274,8 +284,9 @@ V4L2MenuControl::V4L2MenuControl
  * V4L2ButtonControl
  */
 V4L2ButtonControl::V4L2ButtonControl
-(int fd, const struct v4l2_queryctrl &ctrl, MainWindow *mw) :
-  V4L2Control(fd, ctrl, mw)
+(int fd, const struct v4l2_queryctrl &ctrl, MainWindow *mw,
+                         ros::Publisher* pub) :
+  V4L2Control(fd, ctrl, mw, pub)
 {
   updateStatus();
 }

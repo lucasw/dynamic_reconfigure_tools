@@ -22,7 +22,7 @@
 #include <sys/time.h>
 #include <linux/types.h>          /* for videodev2.h */
 #include <linux/videodev2.h>
-
+#include <ros/ros.h>
 
 #ifndef V4L2_CID_IRIS_ABSOLUTE
 #define V4L2_CID_IRIS_ABSOLUTE      (V4L2_CID_CAMERA_CLASS_BASE+17)
@@ -46,11 +46,13 @@ public:
   virtual int getValue() { return value_; }
 
 protected:
-  V4L2Control(int fd, const struct v4l2_queryctrl &ctrl, MainWindow *mw);
+  V4L2Control(int fd, const struct v4l2_queryctrl &ctrl, MainWindow *mw,
+      ros::Publisher* pub);
   int fd;
   int cid;
   int default_value;
   char name[32];
+  ros::Publisher* pub_;
 
 private:
   MainWindow *mw;
@@ -73,7 +75,8 @@ private:
 class V4L2IntegerControl : public V4L2Control
 {
 public:
-  V4L2IntegerControl(int fd, const struct v4l2_queryctrl &ctrl, MainWindow *mw);
+  V4L2IntegerControl(int fd, const struct v4l2_queryctrl &ctrl, MainWindow *mw,
+      ros::Publisher* pub);
 
   void setValue(int val);
 
@@ -86,13 +89,15 @@ private:
 class V4L2BooleanControl : public V4L2Control
 {
 public:
-  V4L2BooleanControl(int fd, const struct v4l2_queryctrl &ctrl, MainWindow *mw);
+  V4L2BooleanControl(int fd, const struct v4l2_queryctrl &ctrl, MainWindow *mw,
+      ros::Publisher* pub);
 };
 
 class V4L2MenuControl : public V4L2Control
 {
 public:
-  V4L2MenuControl(int fd, const struct v4l2_queryctrl &ctrl, MainWindow *mw);
+  V4L2MenuControl(int fd, const struct v4l2_queryctrl &ctrl, MainWindow *mw,
+      ros::Publisher* pub);
 };
 
 class V4L2ButtonControl : public V4L2Control
@@ -100,7 +105,9 @@ class V4L2ButtonControl : public V4L2Control
 public:
   // void resetToDefault();
 
-  V4L2ButtonControl(int fd, const struct v4l2_queryctrl &ctrl, MainWindow *mw);
+  V4L2ButtonControl(int fd, const struct v4l2_queryctrl &ctrl, MainWindow *mw,
+      ros::Publisher* pub);
+
 };
 
 #endif  // V4L2UCP_V4L2CONTROLS_H

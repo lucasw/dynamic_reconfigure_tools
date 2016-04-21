@@ -134,25 +134,26 @@ void MainWindow::add_control(const struct v4l2_queryctrl &ctrl, int fd)
   if (ctrl.flags & V4L2_CTRL_FLAG_DISABLED)
     return;
 
+  pub_[name] = nh_.advertise<std_msgs::Int32>("feedback/" + name, 1);
   switch (ctrl.type)
   {
   case V4L2_CTRL_TYPE_INTEGER:
-    integer_controls_[name] = new V4L2IntegerControl(fd, ctrl, this);
+    integer_controls_[name] = new V4L2IntegerControl(fd, ctrl, this, &pub_[name]);
     sub_[name] = nh_.subscribe<std_msgs::Int32>("controls/" + name, 10,
         boost::bind(&MainWindow::integerControlCallback, this, _1, name));
     break;
   case V4L2_CTRL_TYPE_BOOLEAN:
-    bool_controls_[name] = new V4L2BooleanControl(fd, ctrl, this);
+    bool_controls_[name] = new V4L2BooleanControl(fd, ctrl, this, &pub_[name]);
     sub_[name] = nh_.subscribe<std_msgs::Int32>("controls/" + name, 10,
         boost::bind(&MainWindow::boolControlCallback, this, _1, name));
     break;
   case V4L2_CTRL_TYPE_MENU:
-    menu_controls_[name] = new V4L2MenuControl(fd, ctrl, this);
+    menu_controls_[name] = new V4L2MenuControl(fd, ctrl, this, &pub_[name]);
     sub_[name] = nh_.subscribe<std_msgs::Int32>("controls/" + name, 10,
         boost::bind(&MainWindow::menuControlCallback, this, _1, name));
     break;
   case V4L2_CTRL_TYPE_BUTTON:
-    button_controls_[name] = new V4L2ButtonControl(fd, ctrl, this);
+    button_controls_[name] = new V4L2ButtonControl(fd, ctrl, this, &pub_[name]);
     sub_[name] = nh_.subscribe<std_msgs::Int32>("controls/" + name, 10,
         boost::bind(&MainWindow::buttonControlCallback, this, _1, name));
     break;
