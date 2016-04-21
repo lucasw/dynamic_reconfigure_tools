@@ -46,37 +46,49 @@ class MyPlugin(Plugin):
         # Add widget to the user interface
         context.add_widget(self._widget)
 
+        # need to make this a grid instead
         self.layout = self._widget.findChild(QVBoxLayout, 'vertical_layout')
 
-        # TODO need to look through controls namespace params and create
-        # control for them, put this in a function and allow refreshing
-
         self.pubs = {}
+        self.subs = {}
+        self.val_labels = {}
         #rospy.loginfo(rospy.get_namespace())
         # TODO(lucasw) maybe this should be a pickled string instead
         # of a bunch of params?
         all_params = rospy.get_param_names()
+        prefix = rospy.get_namespace() + "controls/"
+        prefix_feedback = rospy.get_namespace() + "feedback/"
         for param in all_params:
-            if param.find(rospy.get_namespace() + "controls/") >= 0:
+            if param.find(prefix) >= 0:
                 if param.find("_min") < 0 and param.find("_max") < 0 and \
                         param.find("_type") < 0:
                     # TODO
                     hlayout = QHBoxLayout()
                     self.layout.addLayout(hlayout)
-
+                   
+                    param = param.replace(prefix, "")
                     rospy.loginfo(param)
                     label = QLabel()
                     label.setText(param)
                     hlayout.addWidget(label)
-                    minimum = rospy.get_param(param + "_min")
-                    maximum = rospy.get_param(param + "_max")
+                    minimum = rospy.get_param(prefix + param + "_min")
+                    maximum = rospy.get_param(prefix + param + "_max")
 
                     slider = QSlider()
                     slider.setOrientation(QtCore.Qt.Horizontal)
                     hlayout.addWidget(slider)
-                    self.pubs[param] = rospy.Publisher(param,
+                    val_label = QLabel()
+                    val_label.setText("0")
+                    hlayout.addWidget(val_label)
+                    self.val_labels[param] = val_label
+                    self.subs[param] = rospy.Subscriber(prefix_feedback + param,
+                            Int32, self.feedback_callback, param, queue_size=2)
+                    self.pubs[param] = rospy.Publisher(prefix + param,
                             Int32, queue_size=2)
                     slider.valueChanged.connect(partial(self.publish_value, param))
+
+    def feedback_callback(self, msg, param):
+        self.val_labels[param].setText(str(msg.data))
 
     def publish_value(self, name, value):
         # print name, value
