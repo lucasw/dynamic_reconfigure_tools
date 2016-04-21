@@ -4,7 +4,7 @@ import rospy
 from functools import partial
 from qt_gui.plugin import Plugin
 from python_qt_binding import loadUi
-from python_qt_binding.QtGui import QHBoxLayout, QLabel, QVBoxLayout, QSlider, QWidget
+from python_qt_binding.QtGui import QCheckBox, QHBoxLayout, QLabel, QVBoxLayout, QSlider, QWidget
 from python_qt_binding import QtCore
 from std_msgs.msg import Int32
 
@@ -65,18 +65,28 @@ class MyPlugin(Plugin):
                     # TODO
                     hlayout = QHBoxLayout()
                     self.layout.addLayout(hlayout)
-                   
+
                     param = param.replace(prefix, "")
-                    rospy.loginfo(param)
                     label = QLabel()
                     label.setText(param)
                     hlayout.addWidget(label)
                     minimum = rospy.get_param(prefix + param + "_min")
                     maximum = rospy.get_param(prefix + param + "_max")
+                    ctrl_type = rospy.get_param(prefix + param + "_type")
+                    rospy.loginfo(param + " " + str(minimum) + " " +
+                                  str(maximum) + " " + str(ctrl_type))
 
-                    slider = QSlider()
-                    slider.setOrientation(QtCore.Qt.Horizontal)
-                    hlayout.addWidget(slider)
+                    if ctrl_type == 'bool':
+                        checkbox = QCheckBox()
+                        hlayout.addWidget(checkbox)
+                        checkbox.toggled.connect(partial(self.publish_value, param))
+                    else:  # if ctrl_type == 'int':
+                        slider = QSlider()
+                        slider.setOrientation(QtCore.Qt.Horizontal)
+                        slider.setMinimum(minimum)
+                        slider.setMaximum(maximum)
+                        hlayout.addWidget(slider)
+                        slider.valueChanged.connect(partial(self.publish_value, param))
                     val_label = QLabel()
                     val_label.setText("0")
                     hlayout.addWidget(val_label)
@@ -85,14 +95,13 @@ class MyPlugin(Plugin):
                             Int32, self.feedback_callback, param, queue_size=2)
                     self.pubs[param] = rospy.Publisher(prefix + param,
                             Int32, queue_size=2)
-                    slider.valueChanged.connect(partial(self.publish_value, param))
 
     def feedback_callback(self, msg, param):
         self.val_labels[param].setText(str(msg.data))
 
     def publish_value(self, name, value):
         # print name, value
-        self.pubs[name].publish(value)
+        self.pubs[name].publish(int(value))
 
     def shutdown_plugin(self):
         # TODO unregister all publishers here
