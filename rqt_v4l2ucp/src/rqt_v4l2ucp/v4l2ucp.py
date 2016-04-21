@@ -4,7 +4,7 @@ import rospy
 from functools import partial
 from qt_gui.plugin import Plugin
 from python_qt_binding import loadUi
-from python_qt_binding.QtGui import QCheckBox, QHBoxLayout, QLabel, QVBoxLayout, QSlider, QWidget
+from python_qt_binding.QtGui import QCheckBox, QGridLayout, QHBoxLayout, QLabel, QVBoxLayout, QSlider, QWidget
 from python_qt_binding import QtCore
 from std_msgs.msg import Int32
 
@@ -47,7 +47,9 @@ class MyPlugin(Plugin):
         context.add_widget(self._widget)
 
         # need to make this a grid instead
-        self.layout = self._widget.findChild(QVBoxLayout, 'vertical_layout')
+        self.parent_layout = self._widget.findChild(QVBoxLayout, 'vertical_layout')
+        self.layout = QGridLayout()
+        self.parent_layout.addLayout(self.layout)
 
         self.pubs = {}
         self.subs = {}
@@ -58,18 +60,17 @@ class MyPlugin(Plugin):
         all_params = rospy.get_param_names()
         prefix = rospy.get_namespace() + "controls/"
         prefix_feedback = rospy.get_namespace() + "feedback/"
+        row = 0
         for param in all_params:
             if param.find(prefix) >= 0:
                 if param.find("_min") < 0 and param.find("_max") < 0 and \
                         param.find("_type") < 0:
                     # TODO
-                    hlayout = QHBoxLayout()
-                    self.layout.addLayout(hlayout)
 
                     param = param.replace(prefix, "")
                     label = QLabel()
                     label.setText(param)
-                    hlayout.addWidget(label)
+                    self.layout.addWidget(label, row, 0)
                     minimum = rospy.get_param(prefix + param + "_min")
                     maximum = rospy.get_param(prefix + param + "_max")
                     ctrl_type = rospy.get_param(prefix + param + "_type")
@@ -78,24 +79,25 @@ class MyPlugin(Plugin):
 
                     if ctrl_type == 'bool':
                         checkbox = QCheckBox()
-                        hlayout.addWidget(checkbox)
+                        self.layout.addWidget(checkbox, row, 1)
                         checkbox.toggled.connect(partial(self.publish_value, param))
                     else:  # if ctrl_type == 'int':
                         slider = QSlider()
                         slider.setOrientation(QtCore.Qt.Horizontal)
                         slider.setMinimum(minimum)
                         slider.setMaximum(maximum)
-                        hlayout.addWidget(slider)
+                        self.layout.addWidget(slider, row, 1)
                         slider.valueChanged.connect(partial(self.publish_value, param))
                     val_label = QLabel()
-                    val_label.setText("0")
-                    hlayout.addWidget(val_label)
+                    val_label.setFixedWidth(50)
+                    # val_label.setText("0")
+                    self.layout.addWidget(val_label, row, 2)
                     self.val_labels[param] = val_label
                     self.subs[param] = rospy.Subscriber(prefix_feedback + param,
                             Int32, self.feedback_callback, param, queue_size=2)
                     self.pubs[param] = rospy.Publisher(prefix + param,
                             Int32, queue_size=2)
-
+                    row += 1
     def feedback_callback(self, msg, param):
         self.val_labels[param].setText(str(msg.data))
 
