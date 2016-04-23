@@ -18,8 +18,9 @@ class DrTopics():
     def __init__(self):
         self.pubs = {}
         self.subs = {}
+        self.values = {}
 
-        print dir(base_cfg)
+        # print dir(base_cfg)
         base_cfg.all_level = 1
         #rospy.loginfo(rospy.get_namespace())
         # TODO(lucasw) maybe this should be a pickled string instead
@@ -37,6 +38,8 @@ class DrTopics():
                     base_cfg.max[param] = rospy.get_param(prefix + param + "_max")
                     # TODO(lucasw) set the default somewhere
                     base_cfg.defaults[param] = base_cfg.min[param]
+                    self.values[param] = base_cfg.defaults[param]
+
                     base_type = rospy.get_param(prefix + param + "_type")
                     if base_type == 'menu' or base_type == 'button':
                         base_type = 'int'
@@ -59,19 +62,37 @@ class DrTopics():
                     self.pubs[param] = rospy.Publisher(prefix + param,
                             Int32, queue_size=2)
 
+        self.base_cfg = base_cfg
         self.dr_server = Server(base_cfg, self.dr_callback)
 
     def dr_callback(self, config, level):
-        rospy.loginfo(config)
+        # rospy.loginfo(level)
+        # rospy.loginfo(config)
+        for key in config.groups.parameters.keys():
+            if level & self.base_cfg.level[key]:
+                self.pubs[key].publish(Int32(config[key]))
+        #        self.values[key] = config.parameters[key]
+        #    else:
+                # TODO(lucasw) need to update the server in feedback_callback
+                # instead of here
+                #config.parameters[key] = self.values[key]
+
         # rospy.loginfo("""Reconfigure Request: {int_param}, {double_param},\ 
         #              {str_param}, {bool_param}, {size}""".format(**config))
         # TODO(lucasw) publish on all the topics that have been updated in dr
         return config
 
     def feedback_callback(self, msg, param):
-        rospy.loginfo(param + " " + msg.data)
-        # TODO(lucasw) update the dr server
+        # rospy.loginfo(param + " " + msg.data)
+
         # self.pubs[name].publish(int(value))
+        self.values[param] = msg.data
+        # TODO(lucasw) update the dr server
+
+        # dict update
+        delta = {}
+        delta[param] = msg.data
+        self.dr_server.update_configuration(delta)
 
 if __name__ == "__main__":
     rospy.init_node("dr_topics")
