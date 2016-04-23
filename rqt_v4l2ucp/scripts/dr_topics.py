@@ -37,18 +37,18 @@ class DrTopics():
                     base_cfg.max[param] = rospy.get_param(prefix + param + "_max")
                     # TODO(lucasw) set the default somewhere
                     base_cfg.defaults[param] = base_cfg.min[param]
-                    base_cfg.type[param] = rospy.get_param(prefix + param + "_type")
-                    if base_cfg.type[param] == 'menu' or \
-                            base_cfg.type[param] == 'menu' or \
-                            base_cfg.type[param] == 'button':
-                        base_cfg.type[param] == 'int'
+                    base_type = rospy.get_param(prefix + param + "_type")
+                    if base_type == 'menu' or base_type == 'button':
+                        base_type = 'int'
+                    base_cfg.type[param] = base_type
                     base_cfg.level[param] = 1
                     # rospy.loginfo(param + " " + str(minimum) + " " +
                     #               str(maximum) + " " + str(ctrl_type))
                     parameter = copy.deepcopy(base_cfg.example_parameter)
-                    parameter['cconst type'] = 'const ' + base_cfg.type[param]
-                    parameter['ctype'] = base_cfg.type[param]
-                    parameter['type'] = base_cfg.type[param]
+                    parameter['name'] = param
+                    parameter['cconst type'] = 'const ' + base_type
+                    parameter['ctype'] = base_type
+                    parameter['type'] = base_type
                     parameter['min'] = base_cfg.min[param]
                     parameter['max'] = base_cfg.max[param]
                     parameter['level'] = base_cfg.level[param]
@@ -62,9 +62,11 @@ class DrTopics():
         self.dr_server = Server(base_cfg, self.dr_callback)
 
     def dr_callback(self, config, level):
-        rospy.loginfo("""Reconfigure Request: {int_param}, {double_param},\ 
-                      {str_param}, {bool_param}, {size}""".format(**config))
+        rospy.loginfo(config)
+        # rospy.loginfo("""Reconfigure Request: {int_param}, {double_param},\ 
+        #              {str_param}, {bool_param}, {size}""".format(**config))
         # TODO(lucasw) publish on all the topics that have been updated in dr
+        return config
 
     def feedback_callback(self, msg, param):
         rospy.loginfo(param + " " + msg.data)
@@ -74,3 +76,4 @@ class DrTopics():
 if __name__ == "__main__":
     rospy.init_node("dr_topics")
     dr_topics = DrTopics()
+    rospy.spin()
