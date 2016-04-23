@@ -57,39 +57,27 @@ class DrTopics():
                     parameter['level'] = base_cfg.level[param]
                     base_cfg.config_description['parameters'].append(parameter)
                     # TODO(lucasw) support float
-                    self.subs[param] = rospy.Subscriber(prefix_feedback + param,
-                            Int32, self.feedback_callback, param, queue_size=2)
                     self.pubs[param] = rospy.Publisher(prefix + param,
                             Int32, queue_size=2)
 
         self.base_cfg = base_cfg
         self.dr_server = Server(base_cfg, self.dr_callback)
 
+        # can't create subscribers until dr server is running
+        for param in self.values.keys():
+            self.subs[param] = rospy.Subscriber(prefix_feedback + param,
+                                                Int32, self.feedback_callback,
+                                                param, queue_size=2)
+
     def dr_callback(self, config, level):
-        # rospy.loginfo(level)
-        # rospy.loginfo(config)
         for key in config.groups.parameters.keys():
             if level & self.base_cfg.level[key]:
                 self.pubs[key].publish(Int32(config[key]))
-        #        self.values[key] = config.parameters[key]
-        #    else:
-                # TODO(lucasw) need to update the server in feedback_callback
-                # instead of here
-                #config.parameters[key] = self.values[key]
-
-        # rospy.loginfo("""Reconfigure Request: {int_param}, {double_param},\ 
-        #              {str_param}, {bool_param}, {size}""".format(**config))
-        # TODO(lucasw) publish on all the topics that have been updated in dr
         return config
 
     def feedback_callback(self, msg, param):
-        # rospy.loginfo(param + " " + msg.data)
-
-        # self.pubs[name].publish(int(value))
         self.values[param] = msg.data
-        # TODO(lucasw) update the dr server
-
-        # dict update
+        # dict update the dr server
         delta = {}
         delta[param] = msg.data
         self.dr_server.update_configuration(delta)

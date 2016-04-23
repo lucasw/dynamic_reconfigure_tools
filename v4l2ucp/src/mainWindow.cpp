@@ -133,7 +133,7 @@ void MainWindow::add_control(const struct v4l2_queryctrl &ctrl, int fd)
   if (ctrl.flags & V4L2_CTRL_FLAG_DISABLED)
     return;
 
-  pub_[name] = nh_.advertise<std_msgs::Int32>("feedback/" + name, 1);
+  pub_[name] = nh_.advertise<std_msgs::Int32>("feedback/" + name, 1, true);
   switch (ctrl.type)
   {
   case V4L2_CTRL_TYPE_INTEGER:
