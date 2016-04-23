@@ -6,6 +6,7 @@
 # For v4l2ucp it would be nice to be able to do this in C++
 # or alternatively do the v4l2 calls in python.
 
+import copy
 import rospy
 
 from dynamic_reconfigure.server import Server
@@ -18,6 +19,7 @@ class DrTopics():
         self.pubs = {}
         self.subs = {}
 
+        print dir(base_cfg)
         base_cfg.all_level = 1
         #rospy.loginfo(rospy.get_namespace())
         # TODO(lucasw) maybe this should be a pickled string instead
@@ -36,13 +38,21 @@ class DrTopics():
                     # TODO(lucasw) set the default somewhere
                     base_cfg.defaults[param] = base_cfg.min[param]
                     base_cfg.type[param] = rospy.get_param(prefix + param + "_type")
-                    if base_cfg.type == 'menu' or base_cfg.type == 'menu' or \
-                            base_cfg.type == 'button':
-                        base_cfg.type == 'int'
-                    base_cfg.level = 1
+                    if base_cfg.type[param] == 'menu' or \
+                            base_cfg.type[param] == 'menu' or \
+                            base_cfg.type[param] == 'button':
+                        base_cfg.type[param] == 'int'
+                    base_cfg.level[param] = 1
                     # rospy.loginfo(param + " " + str(minimum) + " " +
                     #               str(maximum) + " " + str(ctrl_type))
-
+                    parameter = copy.deepcopy(base_cfg.example_parameter)
+                    parameter['cconst type'] = 'const ' + base_cfg.type[param]
+                    parameter['ctype'] = base_cfg.type[param]
+                    parameter['type'] = base_cfg.type[param]
+                    parameter['min'] = base_cfg.min[param]
+                    parameter['max'] = base_cfg.max[param]
+                    parameter['level'] = base_cfg.level[param]
+                    base_cfg.config_description['parameters'].append(parameter)
                     # TODO(lucasw) support float
                     self.subs[param] = rospy.Subscriber(prefix_feedback + param,
                             Int32, self.feedback_callback, param, queue_size=2)
