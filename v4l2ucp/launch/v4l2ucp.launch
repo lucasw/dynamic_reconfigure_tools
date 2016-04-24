@@ -12,8 +12,7 @@
       output="screen" >
     <param name="device" value="$(arg device)" />
   </node>
-  <node name="rqt_v4l2ucp" pkg="rqt_v4l2ucp" type="rqt_v4l2ucp"
-      output="screen" >
+  <node name="dr_topics" pkg="rqt_v4l2ucp" type="dr_topics.py" >
   </node>
   </group>  <!-- v4l2ucp -->
 
@@ -24,7 +23,10 @@
     <param name="framerate" value="$(arg frame_rate)" />
     <param name="video_device" value="$(arg device)" />
   </node>
-  <node name="rqt_image_view" pkg="rqt_image_view" type="rqt_image_view"
-      ns="usb_cam" >
+
+  <node name="rqt_generic" pkg="rqt_gui" type="rqt_gui" 
+      args="--perspective-file $(find v4l2ucp)/config/v4l2ucp.perspective" 
+      output="screen" >
   </node>
+
 </launch>

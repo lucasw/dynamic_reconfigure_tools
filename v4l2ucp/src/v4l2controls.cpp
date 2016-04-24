@@ -130,7 +130,7 @@ void V4L2Control::updateHardware()
   c.value = getValue();
   if (v4l2_ioctl(fd, VIDIOC_S_CTRL, &c) == -1)
   {
-    ROS_ERROR_STREAM(name << " Unable to set control" << strerror(errno));
+    ROS_ERROR_STREAM(name << " Unable to set control " << strerror(errno));
     updateStatus(false);
   }
   else

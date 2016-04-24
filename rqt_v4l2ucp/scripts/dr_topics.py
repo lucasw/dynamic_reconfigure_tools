@@ -28,8 +28,10 @@ class DrTopics():
         all_params = rospy.get_param_names()
         prefix = rospy.get_namespace() + "controls/"
         prefix_feedback = rospy.get_namespace() + "feedback/"
+        print rospy.get_namespace()
+        level_shift = 0
         for param in all_params:
-            if param.find(prefix) >= 0:
+            if param[0:len(prefix)] == prefix:
                 if param.find("_min") < 0 and param.find("_max") < 0 and \
                         param.find("_type") < 0:
 
@@ -44,7 +46,8 @@ class DrTopics():
                     if base_type == 'menu' or base_type == 'button':
                         base_type = 'int'
                     base_cfg.type[param] = base_type
-                    base_cfg.level[param] = 1
+                    base_cfg.level[param] = 1 << (level_shift % 32)
+                    level_shift += 1
                     # rospy.loginfo(param + " " + str(minimum) + " " +
                     #               str(maximum) + " " + str(ctrl_type))
                     parameter = copy.deepcopy(base_cfg.example_parameter)
@@ -59,6 +62,7 @@ class DrTopics():
                     # TODO(lucasw) support float
                     self.pubs[param] = rospy.Publisher(prefix + param,
                             Int32, queue_size=2)
+        # TODO(lucasw) if no params are found raise a warning
 
         self.base_cfg = base_cfg
         self.dr_server = Server(base_cfg, self.dr_callback)
