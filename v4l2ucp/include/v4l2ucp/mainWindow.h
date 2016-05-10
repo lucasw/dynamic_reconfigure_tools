@@ -38,6 +38,8 @@ private:
   std::map<std::string, ros::Subscriber> sub_;
   std::map<std::string, ros::Publisher> pub_;
 
+  ros::Publisher configured_pub_;
+
   std::map<std::string, V4L2IntegerControl*> integer_controls_;
   std::map<std::string, V4L2BooleanControl*> bool_controls_;
   std::map<std::string, V4L2MenuControl*> menu_controls_;

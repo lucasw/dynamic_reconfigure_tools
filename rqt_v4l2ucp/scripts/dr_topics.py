@@ -11,11 +11,15 @@ import rospy
 
 from dynamic_reconfigure.server import Server
 from rqt_v4l2ucp import base_cfg
-from std_msgs.msg import Int32
+from std_msgs.msg import Empty, Int32
 
 
 class DrTopics():
     def __init__(self):
+        self.configured_sub = rospy.Subscriber("configured", Empty,
+                                               self.config, queue_size=1)
+
+    def config(self, msg):
         self.pubs = {}
         self.subs = {}
         self.values = {}

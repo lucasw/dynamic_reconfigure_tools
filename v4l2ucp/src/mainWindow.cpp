@@ -24,6 +24,7 @@
 #include <functional>
 #include <libv4l2.h>
 #include <ros/ros.h>
+#include <std_msgs/Empty.h>
 #include <sys/ioctl.h>
 
 #include "v4l2ucp/mainWindow.h"
@@ -57,6 +58,8 @@ MainWindow::MainWindow() :
               << (cap.version & 0xff));
 
   ROS_INFO_STREAM("0x" << std::hex << cap.capabilities);
+
+  configured_pub_ = nh_.advertise<std_msgs::Empty>("configured", 1, true);
 
   struct v4l2_queryctrl ctrl;
 #ifdef V4L2_CTRL_FLAG_NEXT_CTRL
@@ -99,6 +102,7 @@ MainWindow::MainWindow() :
       }
     }
   }
+  configured_pub_.publish(std_msgs::Empty());
 }
 
 MainWindow::~MainWindow()
