@@ -6,6 +6,11 @@
 # This allows a static dr panel of controls with only a subset
 # of all available controls.
 
+# roslaunch vimjay dev0_stop_motion.launch
+# rosparam delete /test/controls
+# rosparam load stop_motion_dr.yaml /test/controls
+# rosrun rqt_v4l2ucp dr2dr.py __ns:=/test
+
 # each control is a mixed list
 # [server name, server value name, type, level, description, default value, min, max]
 # TODO support enum and hierarchy late later
@@ -45,9 +50,10 @@ class Dr2Dr():
         for param in all_params:
             if param[0:len(prefix)] == prefix:
 
-                param = param.replace(prefix, "")
                 config = rospy.get_param(param)
-
+                param = param.replace(prefix, "")
+                rospy.loginfo(param)
+                # rospy.loginfo(config)
                 #self.server[param] = config[0]
                 if not config[0] in self.server_params.keys():
                     self.server_params[config[0]] = []
@@ -87,13 +93,14 @@ class Dr2Dr():
     def dr_callback(self, config, level):
         for key in config.groups.parameters.keys():
             if level & self.base_cfg.level[key]:
+                rospy.loginfo(str(level) + " " + key)
                 # self.pubs[key].publish(Int32(config[key]))
         return config
 
     # the callback from the all the other upstream Servers
     def upstream_dr_callback(self, config, params):
-        print config
-        print params
+        rospy.loginfo(config)
+        rospy.loginfo(params)
         # Update the local values
         # http://wiki.ros.org/dynamic_reconfigure/Tutorials/UsingTheDynamicReconfigurePythonClient
         # look through config names and see which ones match up to params
