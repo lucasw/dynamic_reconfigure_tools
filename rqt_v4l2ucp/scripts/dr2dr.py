@@ -112,6 +112,7 @@ class Dr2Dr():
 
     # the callback from this server update the other servers through the clients
     def dr_callback(self, config, level):
+        # print level, config, self.configured, self.break_feedback
         if not self.configured:
             return config
         if self.break_feedback:
