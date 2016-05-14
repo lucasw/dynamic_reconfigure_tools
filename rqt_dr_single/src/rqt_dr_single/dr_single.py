@@ -52,14 +52,23 @@ class DrSingle(Plugin):
 
         self.server_name = rospy.get_param("~server", "tbd")
         # Need to put this is timered callback
+        self.client = None
         try:
-            self.client = Client(self.server_name, timeout=1, config_callback=self.callback)
+            self.client = Client(self.server_name, timeout=1,
+                                 config_callback=self.config_callback,
+                                 description_callback=self.description_callback)
         except:  # ROSException:
             pass
 
-    def callback(self, config):
-        rospy.loginfo("Config set to {int_param}, {double_param}, {str_param}, {bool_param}, {size}".format(**config))
+    def config_callback(self, config):
+        # rospy.loginfo("Config set to {int_param}, {double_param}, {str_param}, {bool_param}, {size}".format(**config))
+        rospy.loginfo(config)
 
+    def description_callback(self, description):
+        # TODO(lucasw) this has the min and max values and types from which to 
+        # generate the gui
+
+        rospy.loginfo(description)
     def temp(self):
         # need to make this a grid instead
         self.parent_layout = self._widget.findChild(QVBoxLayout, 'vertical_layout')
