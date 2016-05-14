@@ -1,0 +1,20 @@
+<library path="src">
+  <class name="dr_single" type="rqt_dr_single.dr_single.DrSingle" base_class_type="rqt_gui_py::Plugin">
+    <description>
+      Interact with a single dynamic reconfigure server.
+    </description>
+    <qtgui>
+      <group>
+        <label>Configuration</label>
+      </group>
+      <!-- optional grouping...
+      <group>
+        <label>Subgroup</label>
+      </group>
+      -->
+      <label>Single Dynamic Reconfigure</label>
+      <icon type="theme">system-help</icon>
+      <statustip>Interact with a single dynamic reconfigure server.</statustip>
+    </qtgui>
+  </class>
+</library>

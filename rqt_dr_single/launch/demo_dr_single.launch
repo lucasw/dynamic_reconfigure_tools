@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- start a dynamic reconfigure server -->
+  <node name="example_server" pkg="rqt_dr_single" type="example_server.py" />
+
+  <!-- launch an rqt_dr_single to interact with it -->
+  <node name="rqt_dr_single" pkg="rqt_dr_single" type="rqt_dr_single" >
+    <param name="server" value="example_server" />
+  </node>
+
+</launch>

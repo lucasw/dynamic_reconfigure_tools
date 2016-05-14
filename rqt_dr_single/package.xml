@@ -36,8 +36,10 @@
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>dynamic_reconfigure</build_depend>
   <build_depend>rospy</build_depend>
   <build_depend>rqt_gui_py</build_depend>
+  <run_depend>dynamic_reconfigure</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>rqt_gui_py</run_depend>
 
@@ -46,7 +48,7 @@
   <export>
     <!-- You can specify that this package is a metapackage here: -->
     <!-- <metapackage/> -->
-    <!--rqt_gui plugin="${prefix}/plugin.xml"/-->
+    <rqt_gui plugin="${prefix}/plugin.xml"/>
     <!-- Other tools can request additional information be placed here -->
 
   </export>
