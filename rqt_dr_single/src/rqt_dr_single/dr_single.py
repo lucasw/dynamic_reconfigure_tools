@@ -54,6 +54,7 @@ class DrSingle(Plugin):
         self.layout = QGridLayout()
         self.parent_layout.addLayout(self.layout)
         self.val_label = {}
+        self.changed_value = {}
         self.do_update_description.connect(self.update_description)
         self.div = 100.0
 
@@ -66,6 +67,8 @@ class DrSingle(Plugin):
                                  description_callback=self.description_callback)
         except:  # ROSException:
             pass
+
+        self.update_timer = rospy.Timer(rospy.Duration(0.05), self.update_configuration)
 
     def description_callback(self, description):
         # self.description = description
@@ -127,7 +130,12 @@ class DrSingle(Plugin):
         # TODO(lucasw) also want a periodic update mode
         if use_div:
             value /= self.div
-        self.client.update_configuration({name: value})
+        self.changed_value[name] = value
+
+    def update_configuration(self, evt):
+        if len(self.changed_value.keys()) > 0:
+            self.client.update_configuration(self.changed_value)
+            self.changed_value = {}
 
     def shutdown_plugin(self):
         # TODO unregister all publishers here
