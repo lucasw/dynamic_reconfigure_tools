@@ -6,7 +6,7 @@ from dynamic_reconfigure.client import Client
 from functools import partial
 from qt_gui.plugin import Plugin
 from python_qt_binding import loadUi
-from python_qt_binding.QtGui import QCheckBox, QGridLayout, QHBoxLayout, QLabel, QVBoxLayout, QSlider, QWidget
+from python_qt_binding.QtGui import QCheckBox, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QSlider, QWidget
 from python_qt_binding import QtCore
 from std_msgs.msg import Int32
 
@@ -55,6 +55,7 @@ class DrSingle(Plugin):
         self.parent_layout.addLayout(self.layout)
         self.val_label = {}
         self.changed_value = {}
+        self.widget = {}
         self.do_update_description.connect(self.update_description)
         self.div = 100.0
 
@@ -78,6 +79,7 @@ class DrSingle(Plugin):
         # clear the layout
         for i in reversed(range(self.layout.count())):
             self.layout.itemAt(i).widget().setParent(None)
+        self.widget = {}
         # TODO(lucasw) this has the min and max values and types from which to 
         # generate the gui
         # rospy.loginfo(description)
@@ -90,31 +92,39 @@ class DrSingle(Plugin):
             label.setText(param['name'])
             self.layout.addWidget(label, row, 0)
 
+            widget = None
             if param['type'] == 'str':
-                pass
+                widget = QLineEdit()
+                widget.setText(param['default'])
+                # TODO(lucasw) can 'enter' key be made to resend textChanged?
+                widget.textChanged.connect(partial(self.value_changed, param['name']))
+                widget.returnPressed.connect(partial(self.text_resend, param['name']))
             elif param['type'] == 'bool':
-                checkbox = QCheckBox()
-                self.layout.addWidget(checkbox, row, 1)
-                checkbox.toggled.connect(partial(self.value_changed, param['name']))
+                widget = QCheckBox()
+                widget.setChecked(param['default'])
+                self.layout.addWidget(widget, row, 1)
+                widget.toggled.connect(partial(self.value_changed, param['name']))
             elif param['type'] == 'double':
                 # TODO(lucasw) also have qspinbox or qdoublespinbox
-                slider = QSlider()
-                slider.setOrientation(QtCore.Qt.Horizontal)
-                slider.setMinimum((param['min']) * self.div)
-                slider.setMaximum((param['max']) * self.div)
-                self.layout.addWidget(slider, row, 1)
-                slider.valueChanged.connect(partial(self.value_changed, param['name'],
+                widget = QSlider()
+                widget.setValue(param['default'])
+                widget.setOrientation(QtCore.Qt.Horizontal)
+                widget.setMinimum((param['min']) * self.div)
+                widget.setMaximum((param['max']) * self.div)
+                widget.valueChanged.connect(partial(self.value_changed, param['name'],
                                             use_div=True))
             elif param['type'] == 'int':
                 # TODO(lucasw) also have qspinbox or qdoublespinbox
-                slider = QSlider()
-                slider.setOrientation(QtCore.Qt.Horizontal)
-                slider.setMinimum((param['min']))
-                slider.setMaximum((param['max']))
-                self.layout.addWidget(slider, row, 1)
-                slider.valueChanged.connect(partial(self.value_changed, param['name']))
+                widget = QSlider()
+                widget.setValue(param['default'])
+                widget.setOrientation(QtCore.Qt.Horizontal)
+                widget.setMinimum((param['min']))
+                widget.setMaximum((param['max']))
+                widget.valueChanged.connect(partial(self.value_changed, param['name']))
+            self.layout.addWidget(widget, row, 1)
+            self.widget[param['name']] = widget
             val_label = QLabel()
-            # val_label.setFixedWidth(100)
+            val_label.setFixedWidth(100)
             # val_label.setText("0")
             self.layout.addWidget(val_label, row, 2)
             self.val_label[param['name']] = val_label
@@ -125,6 +135,9 @@ class DrSingle(Plugin):
         for param_name in config.keys():
             if param_name in self.val_label.keys():
                 self.val_label[param_name].setText(str(config[param_name]))
+
+    def text_resend(self, name):
+        self.changed_value[name] = self.widget[name].text()
 
     def value_changed(self, name, value, use_div=False):
         # TODO(lucasw) also want a periodic update mode
