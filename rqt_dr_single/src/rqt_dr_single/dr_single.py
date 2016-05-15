@@ -11,6 +11,7 @@ from python_qt_binding import QtCore
 from std_msgs.msg import Int32
 
 class DrSingle(Plugin):
+    do_update_description = QtCore.pyqtSignal(list)
 
     def __init__(self, context):
         super(DrSingle, self).__init__(context)
@@ -49,6 +50,11 @@ class DrSingle(Plugin):
             self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
         # Add widget to the user interface
         context.add_widget(self._widget)
+        self.parent_layout = self._widget.findChild(QVBoxLayout, 'vertical_layout')
+        self.layout = QGridLayout()
+        self.parent_layout.addLayout(self.layout)
+        self.val_label = {}
+        self.do_update_description.connect(self.update_description)
 
         self.server_name = rospy.get_param("~server", "tbd")
         # Need to put this is timered callback
@@ -60,68 +66,55 @@ class DrSingle(Plugin):
         except:  # ROSException:
             pass
 
-    def config_callback(self, config):
-        # rospy.loginfo("Config set to {int_param}, {double_param}, {str_param}, {bool_param}, {size}".format(**config))
-        rospy.loginfo(config)
-
     def description_callback(self, description):
+        # self.description = description
+        self.do_update_description.emit(description)
+
+    def update_description(self, description):
+        # clear the layout
+        for i in reversed(range(self.layout.count())):
+            self.layout.itemAt(i).widget().setParent(None)
         # TODO(lucasw) this has the min and max values and types from which to 
         # generate the gui
-
-        rospy.loginfo(description)
-    def temp(self):
-        # need to make this a grid instead
-        self.parent_layout = self._widget.findChild(QVBoxLayout, 'vertical_layout')
-        self.layout = QGridLayout()
-        self.parent_layout.addLayout(self.layout)
-
-        self.pubs = {}
-        self.subs = {}
-        self.val_labels = {}
-        #rospy.loginfo(rospy.get_namespace())
-        # TODO(lucasw) maybe this should be a pickled string instead
-        # of a bunch of params?
-        all_params = rospy.get_param_names()
-        prefix = rospy.get_namespace() + "controls/"
-        prefix_feedback = rospy.get_namespace() + "feedback/"
+        # rospy.loginfo(description)
         row = 0
-        for param in all_params:
-            if param.find(prefix) >= 0:
-                if param.find("_min") < 0 and param.find("_max") < 0 and \
-                        param.find("_type") < 0:
-                    # TODO
+        for param in description:
+            rospy.loginfo(param['name'] + " " + str(param['min']) + " " +
+                          str(param['max']) + " " + str(param['type']))
 
-                    param = param.replace(prefix, "")
-                    label = QLabel()
-                    label.setText(param)
-                    self.layout.addWidget(label, row, 0)
-                    minimum = rospy.get_param(prefix + param + "_min")
-                    maximum = rospy.get_param(prefix + param + "_max")
-                    ctrl_type = rospy.get_param(prefix + param + "_type")
-                    rospy.loginfo(param + " " + str(minimum) + " " +
-                                  str(maximum) + " " + str(ctrl_type))
+            label = QLabel()
+            label.setText(param['name'])
+            self.layout.addWidget(label, row, 0)
 
-                    if ctrl_type == 'bool':
-                        checkbox = QCheckBox()
-                        self.layout.addWidget(checkbox, row, 1)
-                        checkbox.toggled.connect(partial(self.publish_value, param))
-                    else:  # if ctrl_type == 'int':
-                        slider = QSlider()
-                        slider.setOrientation(QtCore.Qt.Horizontal)
-                        slider.setMinimum(minimum)
-                        slider.setMaximum(maximum)
-                        self.layout.addWidget(slider, row, 1)
-                        slider.valueChanged.connect(partial(self.publish_value, param))
-                    val_label = QLabel()
-                    val_label.setFixedWidth(50)
-                    # val_label.setText("0")
-                    self.layout.addWidget(val_label, row, 2)
-                    self.val_labels[param] = val_label
-                    self.subs[param] = rospy.Subscriber(prefix_feedback + param,
-                            Int32, self.feedback_callback, param, queue_size=2)
-                    self.pubs[param] = rospy.Publisher(prefix + param,
-                            Int32, queue_size=2)
-                    row += 1
+            if param['type'] == 'str':
+                pass
+            elif param['type'] == 'bool':
+                checkbox = QCheckBox()
+                self.layout.addWidget(checkbox, row, 1)
+                checkbox.toggled.connect(partial(self.value_changed, param['name']))
+            else:  # if param['type'] == 'int':
+                # TODO(lucasw) also have qspinbox or qdoublespinbox
+                slider = QSlider()
+                slider.setOrientation(QtCore.Qt.Horizontal)
+                slider.setMinimum((param['min']))
+                slider.setMaximum((param['max']))
+                self.layout.addWidget(slider, row, 1)
+                slider.valueChanged.connect(partial(self.value_changed, param['name']))
+            val_label = QLabel()
+            # val_label.setFixedWidth(100)
+            # val_label.setText("0")
+            self.layout.addWidget(val_label, row, 2)
+            self.val_label[param['name']] = val_label
+            row += 1
+
+    def config_callback(self, config):
+        # rospy.loginfo(config)
+        for param_name in config.keys():
+            if param_name in self.val_label.keys():
+                self.val_label[param_name].setText(str(config[param_name]))
+    def value_changed(self, name, value):
+        # TODO(lucasw) also want a periodic update mode
+        self.client.update_configuration({name: value})
 
     def shutdown_plugin(self):
         # TODO unregister all publishers here
