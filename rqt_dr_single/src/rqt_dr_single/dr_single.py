@@ -55,6 +55,7 @@ class DrSingle(Plugin):
         self.parent_layout.addLayout(self.layout)
         self.val_label = {}
         self.do_update_description.connect(self.update_description)
+        self.div = 100.0
 
         self.server_name = rospy.get_param("~server", "tbd")
         # Need to put this is timered callback
@@ -92,7 +93,16 @@ class DrSingle(Plugin):
                 checkbox = QCheckBox()
                 self.layout.addWidget(checkbox, row, 1)
                 checkbox.toggled.connect(partial(self.value_changed, param['name']))
-            else:  # if param['type'] == 'int':
+            elif param['type'] == 'double':
+                # TODO(lucasw) also have qspinbox or qdoublespinbox
+                slider = QSlider()
+                slider.setOrientation(QtCore.Qt.Horizontal)
+                slider.setMinimum((param['min']) * self.div)
+                slider.setMaximum((param['max']) * self.div)
+                self.layout.addWidget(slider, row, 1)
+                slider.valueChanged.connect(partial(self.value_changed, param['name'],
+                                            use_div=True))
+            elif param['type'] == 'int':
                 # TODO(lucasw) also have qspinbox or qdoublespinbox
                 slider = QSlider()
                 slider.setOrientation(QtCore.Qt.Horizontal)
@@ -112,8 +122,11 @@ class DrSingle(Plugin):
         for param_name in config.keys():
             if param_name in self.val_label.keys():
                 self.val_label[param_name].setText(str(config[param_name]))
-    def value_changed(self, name, value):
+
+    def value_changed(self, name, value, use_div=False):
         # TODO(lucasw) also want a periodic update mode
+        if use_div:
+            value /= self.div
         self.client.update_configuration({name: value})
 
     def shutdown_plugin(self):
