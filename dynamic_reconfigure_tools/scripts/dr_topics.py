@@ -10,7 +10,7 @@ import copy
 import rospy
 
 from dynamic_reconfigure.server import Server
-from rqt_v4l2ucp import base_cfg
+from dynamic_reconfigure_tools import base_cfg
 from std_msgs.msg import Empty, Int32
 
 

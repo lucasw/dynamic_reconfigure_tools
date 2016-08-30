@@ -1,13 +1,12 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(v4l2ucp)
+project(dynamic_reconfigure_tools)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  roslint
-  std_msgs
+  rospy
+  rqt_gui_py
 )
 
 ## System dependencies are found with CMake's conventions
@@ -17,22 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
-
-# TODO get rid of QString sprintfs later
-set(ROSLINT_CPP_OPTS "--filter=-runtime/printf")
-roslint_cpp()
-
-set(V4L2UCP_VERSION 2.0.2)
-add_definitions(-Wall -DV4L2UCP_VERSION="${V4L2UCP_VERSION}")
-find_package(Qt4 REQUIRED)
-
-find_library(V4L2_LIBRARY v4l2)
-if (V4L2_LIBRARY)
-    MESSAGE(STATUS "Looking for libv4l - found")
-else (V4L2_LIBRARY)
-    MESSAGE(FATAL_ERROR "Looking for libv4l - not found.")
-endif (V4L2_LIBRARY)
+catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -43,10 +27,10 @@ endif (V4L2_LIBRARY)
 ## * Let MSG_DEP_SET be the set of packages whose message types you use in
 ##   your messages/services/actions (e.g. std_msgs, actionlib_msgs, ...).
 ## * In the file package.xml:
-##   * add a build_depend tag for "message_generation"
 ##   * add a build_depend and a run_depend tag for each package in MSG_DEP_SET
-##   * If MSG_DEP_SET isn't empty the following dependency has been pulled in
-##     but can be declared for certainty nonetheless:
+##   * If MSG_DEP_SET isn't empty the following dependencies might have been
+##     pulled in transitively but can be declared for certainty nonetheless:
+##     * add a build_depend tag for "message_generation"
 ##     * add a run_depend tag for "message_runtime"
 ## * In this file (CMakeLists.txt):
 ##   * add "message_generation" and every package in MSG_DEP_SET to
@@ -82,27 +66,7 @@ endif (V4L2_LIBRARY)
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   std_msgs
-# )
-
-################################################
-## Declare ROS dynamic reconfigure parameters ##
-################################################
-
-## To declare and build dynamic reconfigure parameters within this
-## package, follow these steps:
-## * In the file package.xml:
-##   * add a build_depend and a run_depend tag for "dynamic_reconfigure"
-## * In this file (CMakeLists.txt):
-##   * add "dynamic_reconfigure" to
-##     find_package(catkin REQUIRED COMPONENTS ...)
-##   * uncomment the "generate_dynamic_reconfigure_options" section below
-##     and list every .cfg file to be processed
-
-## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
+#   std_msgs  # Or other packages containing msgs
 # )
 
 ###################################
@@ -116,8 +80,8 @@ endif (V4L2_LIBRARY)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES v4l2ucp
-#  CATKIN_DEPENDS roscpp rospy rqt_gui rqt_gui_cpp std_msgs
+#  LIBRARIES dynamic_reconfigure_tools
+#  CATKIN_DEPENDS rospy rqt_gui_py
 #  DEPENDS system_lib
 )
 
@@ -125,55 +89,29 @@ catkin_package(
 ## Build ##
 ###########
 
-set(SOURCES
-    src/mainWindow.cpp
-    src/v4l2controls.cpp
-    src/v4l2ucp.cpp
-)
-set(HEADERS
-  include/v4l2ucp/mainWindow.h
-  include/v4l2ucp/v4l2controls.h
-)
-
-
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
-  include
   ${catkin_INCLUDE_DIRS}
-  ${CMAKE_CURRENT_BINARY_DIR}/..
 )
 
-## Declare a C++ library
-# add_library(v4l2ucp
-#   src/${PROJECT_NAME}/v4l2ucp.cpp
+## Declare a cpp library
+# add_library(dynamic_reconfigure_tools
+#   src/${PROJECT_NAME}/dynamic_reconfigure_tools.cpp
 # )
 
-## Add cmake target dependencies of the library
-## as an example, code may need to be generated before libraries
-## either from message generation or dynamic reconfigure
-# add_dependencies(v4l2ucp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+## Declare a cpp executable
+# add_executable(dynamic_reconfigure_tools_node src/dynamic_reconfigure_tools_node.cpp)
 
-## Declare a C++ executable
-add_executable(v4l2ucp ${SOURCES})
-
-## Add cmake target dependencies of the executable
-## same as for the library above
-# add_dependencies(v4l2ucp_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+## Add cmake target dependencies of the executable/library
+## as an example, message headers may need to be generated before nodes
+# add_dependencies(dynamic_reconfigure_tools_node dynamic_reconfigure_tools_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(v4l2ucp
-    ${V4L2_LIBRARY}
-    ${catkin_LIBRARIES}
-)
-
-add_executable(v4l2ctrl src/v4l2ctrl.c)
-target_link_libraries(v4l2ctrl
-    ${V4L2_LIBRARY}
-    ${catkin_LIBRARIES}
-    )
-
+# target_link_libraries(dynamic_reconfigure_tools_node
+#   ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##
@@ -184,13 +122,13 @@ target_link_libraries(v4l2ctrl
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-# install(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+install(PROGRAMS
+  scripts/dynamic_reconfigure_tools
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS v4l2ucp v4l2ucp_node
+# install(TARGETS dynamic_reconfigure_tools dynamic_reconfigure_tools_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -215,7 +153,7 @@ target_link_libraries(v4l2ctrl
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_v4l2ucp.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_dynamic_reconfigure_tools.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

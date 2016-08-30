@@ -9,7 +9,7 @@
 # roslaunch vimjay dev0_stop_motion.launch
 # rosparam delete /test/controls
 # rosparam load stop_motion_dr.yaml /test/controls
-# rosrun rqt_v4l2ucp dr2dr.py __ns:=/test
+# rosrun dynamic_reconfigure_tools dr2dr.py __ns:=/test
 
 # each control is a mixed list
 # [server name, server value name, type, level, description, default value, min, max]
@@ -23,7 +23,7 @@ import rospy
 from dynamic_reconfigure.client import Client
 from dynamic_reconfigure.server import Server
 from functools import partial
-from rqt_v4l2ucp import base_cfg
+from dynamic_reconfigure_tools import base_cfg
 from std_msgs.msg import Empty, Int32
 
 
