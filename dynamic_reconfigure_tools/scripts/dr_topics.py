@@ -11,18 +11,21 @@ import rospy
 
 from dynamic_reconfigure.server import Server
 from dynamic_reconfigure_tools import base_cfg
-from std_msgs.msg import Empty, Int32
+from std_msgs.msg import Empty, Float64, Int32
 
 
 class DrTopics():
     def __init__(self):
         self.configured_sub = rospy.Subscriber("configured", Empty,
                                                self.config, queue_size=1)
+        if rospy.get_param("~config_on_init", True):
+            self.config()
 
-    def config(self, msg):
+    def config(self, msg=None):
         self.pubs = {}
         self.subs = {}
         self.values = {}
+        self.parameters = {}
 
         # print dir(base_cfg)
         base_cfg.all_level = 1
@@ -36,58 +39,73 @@ class DrTopics():
         level_shift = 0
         for param in all_params:
             if param[0:len(prefix)] == prefix:
-                if param.find("_min") < 0 and param.find("_max") < 0 and \
-                        param.find("_type") < 0:
-
+                if param[-len("/name"):] == "/name":
+                    name = rospy.get_param(param)
+                    rospy.loginfo(name)
                     param = param.replace(prefix, "")
-                    base_cfg.min[param] = rospy.get_param(prefix + param + "_min")
-                    base_cfg.max[param] = rospy.get_param(prefix + param + "_max")
+                    param = param.replace("/name", "")
+                    topic = rospy.get_param(prefix + param + "/topic")
+                    base_cfg.min[name] = rospy.get_param(prefix + param + "/min")
+                    base_cfg.max[name] = rospy.get_param(prefix + param + "/max")
                     # TODO(lucasw) set the default somewhere
-                    base_cfg.defaults[param] = base_cfg.min[param]
-                    self.values[param] = base_cfg.defaults[param]
+                    base_cfg.defaults[name] = base_cfg.min[name]
+                    self.values[name] = base_cfg.defaults[name]
 
-                    base_type = rospy.get_param(prefix + param + "_type")
+                    base_type = rospy.get_param(prefix + param + "/type")
                     if base_type == 'menu' or base_type == 'button':
                         base_type = 'int'
-                    base_cfg.type[param] = base_type
-                    base_cfg.level[param] = 1 << (level_shift % 32)
+                    base_cfg.type[name] = base_type
+                    base_cfg.level[name] = 1 << (level_shift % 32)
                     level_shift += 1
                     # rospy.loginfo(param + " " + str(minimum) + " " +
                     #               str(maximum) + " " + str(ctrl_type))
                     parameter = copy.deepcopy(base_cfg.example_parameter)
-                    parameter['name'] = param
+                    parameter['name'] = name
                     parameter['cconst type'] = 'const ' + base_type
                     parameter['ctype'] = base_type
                     parameter['type'] = base_type
-                    parameter['min'] = base_cfg.min[param]
-                    parameter['max'] = base_cfg.max[param]
-                    parameter['level'] = base_cfg.level[param]
+                    parameter['min'] = base_cfg.min[name]
+                    parameter['max'] = base_cfg.max[name]
+                    parameter['level'] = base_cfg.level[name]
+                    self.parameters[name] = parameter
                     base_cfg.config_description['parameters'].append(parameter)
-                    # TODO(lucasw) support float
-                    self.pubs[param] = rospy.Publisher(prefix + param,
-                            Int32, queue_size=2)
+                    # TODO(lucasw) use Float64, Int32 as types
+                    if base_type == 'int':
+                        self.pubs[name] = rospy.Publisher(topic,
+                                                           Int32, queue_size=2)
+                    elif base_type == 'double':
+                        self.pubs[name] = rospy.Publisher(topic,
+                                                           Float64, queue_size=2)
         # TODO(lucasw) if no params are found raise a warning
 
         self.base_cfg = base_cfg
         self.dr_server = Server(base_cfg, self.dr_callback)
 
         # can't create subscribers until dr server is running
-        for param in self.values.keys():
-            self.subs[param] = rospy.Subscriber(prefix_feedback + param,
-                                                Int32, self.feedback_callback,
-                                                param, queue_size=2)
+        for name in self.values.keys():
+            if self.parameters[name]['type'] == 'int':
+                self.subs[name] = rospy.Subscriber(prefix_feedback + name,
+                                                    Int32, self.feedback_callback,
+                                                    param, queue_size=2)
+            elif self.parameters[name]['type'] == 'double':
+                self.subs[name] = rospy.Subscriber(prefix_feedback + name,
+                                                    Float64, self.feedback_callback,
+                                                    param, queue_size=2)
 
     def dr_callback(self, config, level):
         for key in config.groups.parameters.keys():
             if level & self.base_cfg.level[key]:
-                self.pubs[key].publish(Int32(config[key]))
+                if self.parameters[key]['type'] == 'int':
+                    self.pubs[key].publish(Int32(config[key]))
+                elif self.parameters[key]['type'] == 'double':
+                    self.pubs[key].publish(Float64(config[key]))
         return config
 
-    def feedback_callback(self, msg, param):
-        self.values[param] = msg.data
+    def feedback_callback(self, msg, name):
+        self.values[name] = msg.data
         # dict update the dr server
         delta = {}
-        delta[param] = msg.data
+        delta[name] = msg.data
         self.dr_server.update_configuration(delta)
 
 if __name__ == "__main__":
