@@ -48,7 +48,7 @@ class DrTopics():
                     base_cfg.min[name] = rospy.get_param(prefix + param + "/min")
                     base_cfg.max[name] = rospy.get_param(prefix + param + "/max")
                     # TODO(lucasw) set the default somewhere
-                    base_cfg.defaults[name] = base_cfg.min[name]
+                    base_cfg.defaults[name] = rospy.get_param(prefix + param + "/default")
                     self.values[name] = base_cfg.defaults[name]
 
                     base_type = rospy.get_param(prefix + param + "/type")
