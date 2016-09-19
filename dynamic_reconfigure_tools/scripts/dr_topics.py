@@ -40,17 +40,17 @@ class DrTopics():
         level_shift = 0
         for param in all_params:
             if param[0:len(prefix)] == prefix:
-                print prefix, param
                 if param[-len("/name"):] == "/name":
                     name = rospy.get_param(param)
-                    rospy.loginfo(name)
                     param = param.replace(prefix, "")
                     param = param.replace("/name", "")
                     topic = rospy.get_param(prefix + param + "/topic")
                     base_cfg.min[name] = rospy.get_param(prefix + param + "/min")
                     base_cfg.max[name] = rospy.get_param(prefix + param + "/max")
                     # TODO(lucasw) set the default somewhere
-                    base_cfg.defaults[name] = rospy.get_param(prefix + param + "/default")
+                    print name, ':', prefix + param + "/default"
+                    default = rospy.get_param(prefix + param + "/default", base_cfg.min[name])
+                    base_cfg.defaults[name] = default
                     self.values[name] = base_cfg.defaults[name]
 
                     base_type = rospy.get_param(prefix + param + "/type")
@@ -62,7 +62,7 @@ class DrTopics():
                     # rospy.loginfo(param + " " + str(minimum) + " " +
                     #               str(maximum) + " " + str(ctrl_type))
                     parameter = copy.deepcopy(base_cfg.example_parameter)
-                    parameter['name'] = name
+                    parameter['name'] = param  # name
                     parameter['cconst type'] = 'const ' + base_type
                     parameter['ctype'] = base_type
                     parameter['type'] = base_type
