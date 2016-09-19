@@ -1,3 +1,4 @@
+# connect to a single dynamic reconfigure server
 import os
 import rospkg
 import rospy
@@ -6,7 +7,11 @@ from dynamic_reconfigure.client import Client
 from functools import partial
 from qt_gui.plugin import Plugin
 from python_qt_binding import loadUi
-from python_qt_binding.QtGui import QCheckBox, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QSlider, QWidget
+# TODO(lucasw) need a library version detection to switch between these?
+# ImportError: cannot import name QCheckBox
+# from python_qt_binding.QtGui import QCheckBox, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QSlider, QWidget
+# this works in qt5 kinetic
+from python_qt_binding.QtWidgets import QCheckBox, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QSlider, QWidget
 from python_qt_binding import QtCore
 from std_msgs.msg import Int32
 
