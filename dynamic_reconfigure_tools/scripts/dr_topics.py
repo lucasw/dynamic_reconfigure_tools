@@ -16,6 +16,7 @@ from std_msgs.msg import Empty, Float64, Int32
 
 class DrTopics():
     def __init__(self):
+        self.dr_server = None
         self.configured_sub = rospy.Subscriber("configured", Empty,
                                                self.config, queue_size=1)
         if rospy.get_param("~config_on_init", True):
@@ -35,10 +36,11 @@ class DrTopics():
         all_params = rospy.get_param_names()
         prefix = rospy.get_namespace() + "controls/"
         prefix_feedback = rospy.get_namespace() + "feedback/"
-        print rospy.get_namespace()
+        rospy.loginfo(rospy.get_namespace())
         level_shift = 0
         for param in all_params:
             if param[0:len(prefix)] == prefix:
+                print prefix, param
                 if param[-len("/name"):] == "/name":
                     name = rospy.get_param(param)
                     rospy.loginfo(name)
@@ -79,6 +81,9 @@ class DrTopics():
         # TODO(lucasw) if no params are found raise a warning
 
         self.base_cfg = base_cfg
+
+        # TODO(lucasw) if dr_server is already running from previous
+        # init, how to stop it?
         self.dr_server = Server(base_cfg, self.dr_callback)
 
         # can't create subscribers until dr server is running
