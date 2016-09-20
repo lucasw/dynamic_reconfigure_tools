@@ -19,8 +19,10 @@ class DrTopics():
         self.dr_server = None
         self.configured_sub = rospy.Subscriber("configured", Empty,
                                                self.config, queue_size=1)
-        if rospy.get_param("~config_on_init", True):
-            self.config()
+        # TODO(lucasw) this might run concurrently with callback,
+        # which results in errors
+        # if rospy.get_param("~config_on_init", False):
+        #    self.config()
 
     def config(self, msg=None):
         self.pubs = {}
@@ -41,42 +43,44 @@ class DrTopics():
         for param in all_params:
             if param[0:len(prefix)] == prefix:
                 if param[-len("/name"):] == "/name":
+                    # TODO(lucasw) this is more readable than 'param',
+                    # but might contain illegal characters
                     name = rospy.get_param(param)
                     param = param.replace(prefix, "")
                     param = param.replace("/name", "")
                     topic = rospy.get_param(prefix + param + "/topic")
-                    base_cfg.min[name] = rospy.get_param(prefix + param + "/min")
-                    base_cfg.max[name] = rospy.get_param(prefix + param + "/max")
+                    base_cfg.min[param] = rospy.get_param(prefix + param + "/min")
+                    base_cfg.max[param] = rospy.get_param(prefix + param + "/max")
                     # TODO(lucasw) set the default somewhere
                     print name, ':', prefix + param + "/default"
-                    default = rospy.get_param(prefix + param + "/default", base_cfg.min[name])
-                    base_cfg.defaults[name] = default
-                    self.values[name] = base_cfg.defaults[name]
+                    default = rospy.get_param(prefix + param + "/default", base_cfg.min[param])
+                    base_cfg.defaults[param] = default
+                    self.values[param] = base_cfg.defaults[param]
 
                     base_type = rospy.get_param(prefix + param + "/type")
                     if base_type == 'menu' or base_type == 'button':
                         base_type = 'int'
-                    base_cfg.type[name] = base_type
-                    base_cfg.level[name] = 1 << (level_shift % 32)
+                    base_cfg.type[param] = base_type
+                    base_cfg.level[param] = 1 << (level_shift % 32)
                     level_shift += 1
                     # rospy.loginfo(param + " " + str(minimum) + " " +
                     #               str(maximum) + " " + str(ctrl_type))
                     parameter = copy.deepcopy(base_cfg.example_parameter)
-                    parameter['name'] = param  # name
+                    parameter['name'] = param
                     parameter['cconst type'] = 'const ' + base_type
                     parameter['ctype'] = base_type
                     parameter['type'] = base_type
-                    parameter['min'] = base_cfg.min[name]
-                    parameter['max'] = base_cfg.max[name]
-                    parameter['level'] = base_cfg.level[name]
-                    self.parameters[name] = parameter
+                    parameter['min'] = base_cfg.min[param]
+                    parameter['max'] = base_cfg.max[param]
+                    parameter['level'] = base_cfg.level[param]
+                    self.parameters[param] = parameter
                     base_cfg.config_description['parameters'].append(parameter)
                     # TODO(lucasw) use Float64, Int32 as types
                     if base_type == 'int':
-                        self.pubs[name] = rospy.Publisher(topic,
+                        self.pubs[param] = rospy.Publisher(topic,
                                                            Int32, queue_size=2)
                     elif base_type == 'double':
-                        self.pubs[name] = rospy.Publisher(topic,
+                        self.pubs[param] = rospy.Publisher(topic,
                                                            Float64, queue_size=2)
         # TODO(lucasw) if no params are found raise a warning
 
@@ -87,13 +91,13 @@ class DrTopics():
         self.dr_server = Server(base_cfg, self.dr_callback)
 
         # can't create subscribers until dr server is running
-        for name in self.values.keys():
-            if self.parameters[name]['type'] == 'int':
-                self.subs[name] = rospy.Subscriber(prefix_feedback + name,
+        for param in self.values.keys():
+            if self.parameters[param]['type'] == 'int':
+                self.subs[param] = rospy.Subscriber(prefix_feedback + param,
                                                     Int32, self.feedback_callback,
                                                     param, queue_size=2)
-            elif self.parameters[name]['type'] == 'double':
-                self.subs[name] = rospy.Subscriber(prefix_feedback + name,
+            elif self.parameters[param]['type'] == 'double':
+                self.subs[param] = rospy.Subscriber(prefix_feedback + param,
                                                     Float64, self.feedback_callback,
                                                     param, queue_size=2)
 
@@ -106,11 +110,11 @@ class DrTopics():
                     self.pubs[key].publish(Float64(config[key]))
         return config
 
-    def feedback_callback(self, msg, name):
-        self.values[name] = msg.data
+    def feedback_callback(self, msg, param):
+        self.values[param] = msg.data
         # dict update the dr server
         delta = {}
-        delta[name] = msg.data
+        delta[param] = msg.data
         self.dr_server.update_configuration(delta)
 
 if __name__ == "__main__":
