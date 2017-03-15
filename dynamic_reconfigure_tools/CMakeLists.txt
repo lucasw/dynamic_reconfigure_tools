@@ -123,7 +123,7 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 install(PROGRAMS
-  scripts/dr_to_topics.py
+  scripts/dr_topics.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
