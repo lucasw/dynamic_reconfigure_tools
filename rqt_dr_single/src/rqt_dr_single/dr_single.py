@@ -107,6 +107,8 @@ class DrSingle(Plugin):
         self.do_update_description.emit(description)
 
     def reset(self):
+        self.described = False
+        self.config = None
         self.widget = {}
         self.connections = {}
         self.use_div = {}
@@ -121,8 +123,8 @@ class DrSingle(Plugin):
         # rospy.loginfo(description)
         row = 0
         for param in description:
-            rospy.loginfo(param['name'] + " " + str(param['min']) + " " +
-                          str(param['max']) + " " + str(param['type']))
+            rospy.logdebug(param['name'] + " " + str(param['min']) + " " +
+                           str(param['max']) + " " + str(param['type']))
 
             label = QLabel()
             label.setText(param['name'])
@@ -169,22 +171,34 @@ class DrSingle(Plugin):
             self.layout.addWidget(val_label, row, 2)
             self.val_label[param['name']] = val_label
             row += 1
+        self.described = True
+        self.update_config()
 
     def config_callback(self, config):
+        # The first config/description callback happen out of order-
+        # the description is updated after the config, so need to store it.
+        self.config = config
+        if self.described:
+            self.update_config()
+
+    def update_config(self):
+        if not self.config:
+            return
         # if not self.client:
         #     return
         # rospy.loginfo(config)
-        for param_name in config.keys():
+        for param_name in self.config.keys():
             if param_name in self.val_label.keys() and param_name in self.widget.keys():
-                self.val_label[param_name].setText(str(config[param_name]))
+                self.val_label[param_name].setText(str(self.config[param_name]))
                 # TODO(lucasw) also need to change slider
                 if type(self.widget[param_name]) is type(QSlider()):
-                    value = config[param_name]
+                    value = self.config[param_name]
                     self.widget[param_name].valueChanged.disconnect()
                     if self.use_div[param_name]:
                         value = value * self.div
                     self.widget[param_name].setValue(value)
                     self.widget[param_name].valueChanged.connect(self.connections[param_name])
+        self.config = None
 
     def text_resend(self, name):
         self.changed_value[name] = self.widget[name].text()
