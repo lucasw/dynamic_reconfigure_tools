@@ -85,6 +85,8 @@ class DrSingle(Plugin):
         for i in reversed(range(self.layout.count())):
             self.layout.itemAt(i).widget().setParent(None)
         self.widget = {}
+        self.connections = {}
+        self.use_div = {}
         # TODO(lucasw) this has the min and max values and types from which to 
         # generate the gui
         # rospy.loginfo(description)
@@ -101,14 +103,14 @@ class DrSingle(Plugin):
             if param['type'] == 'str':
                 widget = QLineEdit()
                 widget.setText(param['default'])
-                # TODO(lucasw) can 'enter' key be made to resend textChanged?
-                widget.textChanged.connect(partial(self.value_changed, param['name']))
-                widget.returnPressed.connect(partial(self.text_resend, param['name']))
+                widget.editingFinished.connect(partial(self.text_resend, param['name']))
             elif param['type'] == 'bool':
                 widget = QCheckBox()
                 widget.setChecked(param['default'])
                 self.layout.addWidget(widget, row, 1)
-                widget.toggled.connect(partial(self.value_changed, param['name']))
+                self.use_div[param['name']] = False
+                self.connections[param['name']] = partial(self.value_changed, param['name'])
+                widget.toggled.connect(self.connections[param['name']])
             elif param['type'] == 'double':
                 # TODO(lucasw) also have qspinbox or qdoublespinbox
                 widget = QSlider()
@@ -116,8 +118,10 @@ class DrSingle(Plugin):
                 widget.setOrientation(QtCore.Qt.Horizontal)
                 widget.setMinimum((param['min']) * self.div)
                 widget.setMaximum((param['max']) * self.div)
-                widget.valueChanged.connect(partial(self.value_changed, param['name'],
-                                            use_div=True))
+                self.use_div[param['name']] = True
+                self.connections[param['name']] = partial(self.value_changed, param['name'],
+                                            use_div=True)
+                widget.valueChanged.connect(self.connections[param['name']])
             elif param['type'] == 'int':
                 # TODO(lucasw) also have qspinbox or qdoublespinbox
                 widget = QSlider()
@@ -125,7 +129,9 @@ class DrSingle(Plugin):
                 widget.setOrientation(QtCore.Qt.Horizontal)
                 widget.setMinimum((param['min']))
                 widget.setMaximum((param['max']))
-                widget.valueChanged.connect(partial(self.value_changed, param['name']))
+                self.use_div[param['name']] = False
+                self.connections[param['name']] = partial(self.value_changed, param['name'])
+                widget.valueChanged.connect(self.connections[param['name']])
             self.layout.addWidget(widget, row, 1)
             self.widget[param['name']] = widget
             val_label = QLabel()
@@ -140,6 +146,14 @@ class DrSingle(Plugin):
         for param_name in config.keys():
             if param_name in self.val_label.keys():
                 self.val_label[param_name].setText(str(config[param_name]))
+                # TODO(lucasw) also need to change slider
+                if type(self.widget[param_name]) is type(QSlider()):
+                    value = config[param_name]
+                    self.widget[param_name].valueChanged.disconnect()
+                    if self.use_div[param_name]:
+                        value = value * self.div
+                    self.widget[param_name].setValue(value)
+                    self.widget[param_name].valueChanged.connect(self.connections[param_name])
 
     def text_resend(self, name):
         self.changed_value[name] = self.widget[name].text()
