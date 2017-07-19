@@ -32,9 +32,12 @@
       <widget class="QComboBox" name="server_combobox"/>
      </item>
      <item>
-      <widget class="QLabel" name="server_label">
-       <property name="frameShape">
-        <enum>QFrame::StyledPanel</enum>
+      <widget class="QPushButton" name="refresh_button">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
        </property>
        <property name="text">
         <string/>

@@ -12,7 +12,7 @@ from python_qt_binding import loadUi
 # from python_qt_binding.QtGui import QCheckBox, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QSlider, QWidget
 # this works in qt5 kinetic
 from python_qt_binding.QtWidgets import QCheckBox, QComboBox, QGridLayout
-from python_qt_binding.QtWidgets import QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QSlider, QWidget
+from python_qt_binding.QtWidgets import QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QSlider, QWidget
 from python_qt_binding import QtCore
 from std_msgs.msg import Int32
 
@@ -68,14 +68,15 @@ class DrSingle(Plugin):
         if len(self.server_name) == 0 or self.server_name[0] != '/':
             self.server_name = rospy.get_namespace() + self.server_name
 
-        self.server_label = self._widget.findChild(QLabel, 'server_label')
-        self.server_label.setText(self.server_name)
+        self.refresh_button = self._widget.findChild(QPushButton, 'refresh_button')
+        self.refresh_button.pressed.connect(self.update_topic_list)
+
         self.connected_checkbox = self._widget.findChild(QCheckBox, 'connected_checkbox')
         self.connected_checkbox.setChecked(False)
         self.connected_checkbox.setEnabled(False)
         self.server_combobox = self._widget.findChild(QComboBox, 'server_combobox')
-        self.update_topic_list()
         self.server_combobox.currentIndexChanged.connect(self.server_changed)
+        self.update_topic_list()
 
         # Need to put this is timered callback
         self.client = None
@@ -83,7 +84,9 @@ class DrSingle(Plugin):
 
     def update_topic_list(self):
         topics = rospy.get_published_topics()
+        self.server_combobox.currentIndexChanged.disconnect(self.server_changed)
         self.server_combobox.clear()
+        rospy.loginfo(self.server_name)
         self.server_combobox.addItem(self.server_name)
         dr_list = []
         for topic in topics:
@@ -92,15 +95,16 @@ class DrSingle(Plugin):
                 if server_name != self.server_name:
                     dr_list.append(server_name)
         self.server_combobox.addItems(dr_list)
+        self.server_combobox.currentIndexChanged.connect(self.server_changed)
 
     def server_changed(self, index):
         new_server = self.server_combobox.currentText()
+        rospy.loginfo(new_server)
         if self.server_name != new_server:
             self.server_name = new_server
             self.client = None
             self.changed_value = {}
             self.reset()
-            self.server_label.setText(self.server_name)
 
     def description_callback(self, description):
         # self.description = description
