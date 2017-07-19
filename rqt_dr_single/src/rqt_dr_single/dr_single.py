@@ -195,13 +195,17 @@ class DrSingle(Plugin):
             if param_name in self.val_label.keys() and param_name in self.widget.keys():
                 self.val_label[param_name].setText(str(self.config[param_name]))
                 # TODO(lucasw) also need to change slider
+                value = self.config[param_name]
                 if type(self.widget[param_name]) is type(QSlider()):
-                    value = self.config[param_name]
                     self.widget[param_name].valueChanged.disconnect()
                     if self.use_div[param_name]:
                         value = value * self.div
                     self.widget[param_name].setValue(value)
                     self.widget[param_name].valueChanged.connect(self.connections[param_name])
+                elif type(self.widget[param_name]) is type(QLineEdit()):
+                    self.widget[param_name].setText(value)
+                elif type(self.widget[param_name]) is type(QCheckBox()):
+                    self.widget[param_name].setChecked(value)
         self.config = None
 
     def text_resend(self, name):
