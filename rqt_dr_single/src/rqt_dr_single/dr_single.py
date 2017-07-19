@@ -65,6 +65,13 @@ class DrSingle(Plugin):
         self.div = 100.0
 
         self.server_name = rospy.get_param("~server", "tbd")
+
+        self.server_label = self._widget.findChild(QLabel, 'server_label')
+        self.server_label.setText(self.server_name)
+        self.connected_checkbox = self._widget.findChild(QCheckBox, 'connected_checkbox')
+        self.connected_checkbox.setChecked(False)
+        self.connected_checkbox.setEnabled(False)
+
         # Need to put this is timered callback
         self.client = None
         self.update_timer = rospy.Timer(rospy.Duration(0.05), self.update_configuration)
@@ -165,6 +172,7 @@ class DrSingle(Plugin):
                                      description_callback=self.description_callback)
             except:  # ROSException:
                 return
+        self.connected_checkbox.setChecked(True)
 
         if len(self.changed_value.keys()) > 0:
             try:
@@ -172,6 +180,7 @@ class DrSingle(Plugin):
             except:
                 rospy.logerr("lost connection to server")
                 self.client = None
+                self.connected_checkbox.setChecked(False)
                 return
             self.changed_value = {}
 
