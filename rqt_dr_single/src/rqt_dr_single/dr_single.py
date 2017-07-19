@@ -11,7 +11,8 @@ from python_qt_binding import loadUi
 # ImportError: cannot import name QCheckBox
 # from python_qt_binding.QtGui import QCheckBox, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QSlider, QWidget
 # this works in qt5 kinetic
-from python_qt_binding.QtWidgets import QCheckBox, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QSlider, QWidget
+from python_qt_binding.QtWidgets import QCheckBox, QComboBox, QGridLayout
+from python_qt_binding.QtWidgets import QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QSlider, QWidget
 from python_qt_binding import QtCore
 from std_msgs.msg import Int32
 
@@ -71,10 +72,21 @@ class DrSingle(Plugin):
         self.connected_checkbox = self._widget.findChild(QCheckBox, 'connected_checkbox')
         self.connected_checkbox.setChecked(False)
         self.connected_checkbox.setEnabled(False)
+        self.server_combobox = self._widget.findChild(QComboBox, 'server_combobox')
 
+        self.update_topic_list()
         # Need to put this is timered callback
         self.client = None
         self.update_timer = rospy.Timer(rospy.Duration(0.05), self.update_configuration)
+
+    def update_topic_list(self):
+        topics = rospy.get_published_topics()
+        self.server_combobox.clear()
+        dr_list = []
+        for topic in topics:
+            if topic[1] == 'dynamic_reconfigure/ConfigDescription':
+                dr_list.append(topic[0][:topic[0].rfind('/')])
+        self.server_combobox.addItems(dr_list)
 
     def description_callback(self, description):
         # self.description = description

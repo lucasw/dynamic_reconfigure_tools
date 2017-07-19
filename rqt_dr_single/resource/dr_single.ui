@@ -29,6 +29,9 @@
    <item>
     <layout class="QHBoxLayout" name="header">
      <item>
+      <widget class="QComboBox" name="server_combobox"/>
+     </item>
+     <item>
       <widget class="QLabel" name="server_label">
        <property name="frameShape">
         <enum>QFrame::StyledPanel</enum>
