@@ -67,13 +67,6 @@ class DrSingle(Plugin):
         self.server_name = rospy.get_param("~server", "tbd")
         # Need to put this is timered callback
         self.client = None
-        try:
-            self.client = Client(self.server_name, timeout=1,
-                                 config_callback=self.config_callback,
-                                 description_callback=self.description_callback)
-        except:  # ROSException:
-            pass
-
         self.update_timer = rospy.Timer(rospy.Duration(0.05), self.update_configuration)
 
     def description_callback(self, description):
@@ -165,8 +158,21 @@ class DrSingle(Plugin):
         self.changed_value[name] = value
 
     def update_configuration(self, evt):
+        if self.client is None:
+            try:
+                self.client = Client(self.server_name, timeout=0.1,
+                                     config_callback=self.config_callback,
+                                     description_callback=self.description_callback)
+            except:  # ROSException:
+                return
+
         if len(self.changed_value.keys()) > 0:
-            self.client.update_configuration(self.changed_value)
+            try:
+                self.client.update_configuration(self.changed_value)
+            except:
+                rospy.logerr("lost connection to server")
+                self.client = None
+                return
             self.changed_value = {}
 
     def shutdown_plugin(self):
