@@ -59,13 +59,14 @@ class DrSingle(Plugin):
         self.parent_layout = self._widget.findChild(QVBoxLayout, 'vertical_layout')
         self.layout = QGridLayout()
         self.parent_layout.addLayout(self.layout)
-        self.val_label = {}
         self.changed_value = {}
-        self.widget = {}
+        self.reset()
         self.do_update_description.connect(self.update_description)
         self.div = 100.0
 
         self.server_name = rospy.get_param("~server", "tbd")
+        if len(self.server_name) == 0 or self.server_name[0] != '/':
+            self.server_name = rospy.get_namespace() + self.server_name
 
         self.server_label = self._widget.findChild(QLabel, 'server_label')
         self.server_label.setText(self.server_name)
@@ -73,8 +74,9 @@ class DrSingle(Plugin):
         self.connected_checkbox.setChecked(False)
         self.connected_checkbox.setEnabled(False)
         self.server_combobox = self._widget.findChild(QComboBox, 'server_combobox')
-
         self.update_topic_list()
+        self.server_combobox.currentIndexChanged.connect(self.server_changed)
+
         # Need to put this is timered callback
         self.client = None
         self.update_timer = rospy.Timer(rospy.Duration(0.05), self.update_configuration)
@@ -82,23 +84,38 @@ class DrSingle(Plugin):
     def update_topic_list(self):
         topics = rospy.get_published_topics()
         self.server_combobox.clear()
+        self.server_combobox.addItem(self.server_name)
         dr_list = []
         for topic in topics:
             if topic[1] == 'dynamic_reconfigure/ConfigDescription':
-                dr_list.append(topic[0][:topic[0].rfind('/')])
+                server_name = topic[0][:topic[0].rfind('/')]
+                if server_name != self.server_name:
+                    dr_list.append(server_name)
         self.server_combobox.addItems(dr_list)
+
+    def server_changed(self, index):
+        new_server = self.server_combobox.currentText()
+        if self.server_name != new_server:
+            self.server_name = new_server
+            self.client = None
+            self.changed_value = {}
+            self.reset()
+            self.server_label.setText(self.server_name)
 
     def description_callback(self, description):
         # self.description = description
         self.do_update_description.emit(description)
 
+    def reset(self):
+        self.widget = {}
+        self.connections = {}
+        self.use_div = {}
+        self.val_label = {}
+
     def update_description(self, description):
         # clear the layout
         for i in reversed(range(self.layout.count())):
             self.layout.itemAt(i).widget().setParent(None)
-        self.widget = {}
-        self.connections = {}
-        self.use_div = {}
         # TODO(lucasw) this has the min and max values and types from which to 
         # generate the gui
         # rospy.loginfo(description)
@@ -154,9 +171,11 @@ class DrSingle(Plugin):
             row += 1
 
     def config_callback(self, config):
+        # if not self.client:
+        #     return
         # rospy.loginfo(config)
         for param_name in config.keys():
-            if param_name in self.val_label.keys():
+            if param_name in self.val_label.keys() and param_name in self.widget.keys():
                 self.val_label[param_name].setText(str(config[param_name]))
                 # TODO(lucasw) also need to change slider
                 if type(self.widget[param_name]) is type(QSlider()):
