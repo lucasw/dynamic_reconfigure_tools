@@ -7,7 +7,7 @@ from rqt_dr_single.cfg import ExampleConfig
 
 def callback(config, level):
     rospy.loginfo("""Reconfigure Request: {int_param}, {double_param},\ 
-          {str_param}, {bool_param}, {size}""".format(**config))
+          {str_param}, {bool_param}, {enum_param}""".format(**config))
     return config
 
 if __name__ == "__main__":
