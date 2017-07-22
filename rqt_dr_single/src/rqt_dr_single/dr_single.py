@@ -174,11 +174,17 @@ class DrSingle(Plugin):
                     # edit_method is actually a long string that has to be interpretted
                     # back into a list
                     enums = eval(param['edit_method'])['enum']
+                    values = {}
+                    count = 0
                     for enum in enums:
-                        widget.addItem(enum['name'])
-                        print enum
-                    self.connections[param['name']] = partial(self.value_changed, param['name'])
-                    self.server_combobox.currentIndexChanged.connect(self.connections[param['name']])
+                        name = enum['name'] + ' (' + str(enum['value']) + ')'
+                        widget.addItem(name)
+                        values[count] = enum['value']
+                        count += 1
+                        # print enum
+                    self.connections[param['name']] = partial(self.enum_changed,
+                                                              param['name'], values)
+                    widget.currentIndexChanged.connect(self.connections[param['name']])
 
                 self.use_div[param['name']] = False
             else:
@@ -224,13 +230,17 @@ class DrSingle(Plugin):
                     self.widget[param_name].setText(value)
                 elif type(self.widget[param_name]) is type(QCheckBox()):
                     self.widget[param_name].setChecked(value)
+                elif type(self.widget[param_name]) is type(QComboBox()):
+                    self.widget[param_name].setCurrentIndex(value)
         self.config = None
 
     def text_resend(self, name):
         self.changed_value[name] = self.widget[name].text()
 
+    def enum_changed(self, name, values, ind):
+        self.changed_value[name] = values[ind]
+
     def value_changed(self, name, value, use_div=False):
-        # TODO(lucasw) also want a periodic update mode
         if use_div:
             value /= self.div
         self.changed_value[name] = value
