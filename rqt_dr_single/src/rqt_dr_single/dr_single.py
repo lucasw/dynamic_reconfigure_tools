@@ -64,7 +64,7 @@ class DrSingle(Plugin):
         self.do_update_description.connect(self.update_description)
         self.div = 100.0
 
-        self.server_name = rospy.get_param("~server", "tbd")
+        self.server_name = rospy.get_param("~server", "")
         if len(self.server_name) == 0 or self.server_name[0] != '/':
             self.server_name = rospy.get_namespace() + self.server_name
 
@@ -94,6 +94,8 @@ class DrSingle(Plugin):
                 server_name = topic[0][:topic[0].rfind('/')]
                 if server_name != self.server_name:
                     dr_list.append(server_name)
+                # if self.server_name == "/":
+                #    self.server_name = server_name
         self.server_combobox.addItems(dr_list)
         self.server_combobox.currentIndexChanged.connect(self.server_changed)
 
@@ -159,22 +161,38 @@ class DrSingle(Plugin):
                 widget.valueChanged.connect(self.connections[param['name']])
             elif param['type'] == 'int':
                 # TODO(lucasw) also have qspinbox or qdoublespinbox
-                widget = QSlider()
-                widget.setValue(param['default'])
-                widget.setOrientation(QtCore.Qt.Horizontal)
-                widget.setMinimum((param['min']))
-                widget.setMaximum((param['max']))
+                if param['edit_method'] == '':
+                    widget = QSlider()
+                    widget.setValue(param['default'])
+                    widget.setOrientation(QtCore.Qt.Horizontal)
+                    widget.setMinimum((param['min']))
+                    widget.setMaximum((param['max']))
+                    self.connections[param['name']] = partial(self.value_changed, param['name'])
+                    widget.valueChanged.connect(self.connections[param['name']])
+                else:  # enum
+                    widget = QComboBox()
+                    # edit_method is actually a long string that has to be interpretted
+                    # back into a list
+                    enums = eval(param['edit_method'])['enum']
+                    for enum in enums:
+                        widget.addItem(enum['name'])
+                        print enum
+                    self.connections[param['name']] = partial(self.value_changed, param['name'])
+                    self.server_combobox.currentIndexChanged.connect(self.connections[param['name']])
+
                 self.use_div[param['name']] = False
-                self.connections[param['name']] = partial(self.value_changed, param['name'])
-                widget.valueChanged.connect(self.connections[param['name']])
-            self.layout.addWidget(widget, row, 1)
-            self.widget[param['name']] = widget
-            val_label = QLabel()
-            val_label.setFixedWidth(100)
-            # val_label.setText("0")
-            self.layout.addWidget(val_label, row, 2)
-            self.val_label[param['name']] = val_label
-            row += 1
+            else:
+                rospy.logerr(param)
+
+            if widget:
+                self.layout.addWidget(widget, row, 1)
+                self.widget[param['name']] = widget
+                val_label = QLabel()
+                val_label.setFixedWidth(100)
+                # val_label.setText("0")
+                self.layout.addWidget(val_label, row, 2)
+                self.val_label[param['name']] = val_label
+                row += 1
         self.described = True
         self.update_config()
 
