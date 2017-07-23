@@ -11,8 +11,10 @@ from python_qt_binding import loadUi
 # ImportError: cannot import name QCheckBox
 # from python_qt_binding.QtGui import QCheckBox, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QSlider, QWidget
 # this works in qt5 kinetic
+from python_qt_binding.QtGui import QDoubleValidator, QIntValidator
 from python_qt_binding.QtWidgets import QCheckBox, QComboBox, QGridLayout
 from python_qt_binding.QtWidgets import QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QSlider, QWidget
+
 from python_qt_binding import QtCore
 from std_msgs.msg import Int32
 
@@ -120,6 +122,32 @@ class DrSingle(Plugin):
         self.use_div = {}
         self.val_label = {}
 
+    def add_label(self, name, row):
+        # TODO(lucasw) don't really need this
+        return
+        val_label = QLabel()
+        val_label.setFixedWidth(90)
+        self.layout.addWidget(val_label, row, 2)
+        self.val_label[name] = val_label
+
+    def make_line_edit(self, name, row, vmin, vmax, double_not_int):
+        val_edit = QLineEdit()
+        val_edit.setFixedWidth(90)
+        # TODO(lucasw) have optional ability to break limits
+        if double_not_int:
+            val_edit.setValidator(QDoubleValidator(vmin,
+                                                   vmax, 8, self))
+        else:
+            val_edit.setValidator(QIntValidator(vmin,
+                                                vmax, self))
+        connection_name = name + "_line_edit"
+        self.connections[connection_name] = partial(self.text_changed,
+                                                    name)
+        val_edit.editingFinished.connect(self.connections[connection_name])
+        self.layout.addWidget(val_edit, row, 2)
+        self.val_label[name] = val_edit
+        return val_edit
+
     def update_description(self, description):
         # clear the layout
         for i in reversed(range(self.layout.count())):
@@ -141,6 +169,8 @@ class DrSingle(Plugin):
                 widget = QLineEdit()
                 widget.setText(param['default'])
                 widget.editingFinished.connect(partial(self.text_resend, param['name']))
+                self.add_label(param['name'], row)
+                self.layout.addWidget(widget, row, 1)
             elif param['type'] == 'bool':
                 widget = QCheckBox()
                 widget.setChecked(param['default'])
@@ -148,20 +178,33 @@ class DrSingle(Plugin):
                 self.use_div[param['name']] = False
                 self.connections[param['name']] = partial(self.value_changed, param['name'])
                 widget.toggled.connect(self.connections[param['name']])
+                self.add_label(param['name'], row)
+                self.layout.addWidget(widget, row, 1)
             elif param['type'] == 'double':
                 # TODO(lucasw) also have qspinbox or qdoublespinbox
+                layout = QHBoxLayout()
                 widget = QSlider()
                 widget.setValue(param['default'])
                 widget.setOrientation(QtCore.Qt.Horizontal)
                 widget.setMinimum((param['min']) * self.div)
                 widget.setMaximum((param['max']) * self.div)
                 self.use_div[param['name']] = True
-                self.connections[param['name']] = partial(self.value_changed, param['name'],
-                                            use_div=True)
+                self.connections[param['name']] = partial(self.value_changed,
+                                                          param['name'],
+                                                          use_div=True)
                 widget.valueChanged.connect(self.connections[param['name']])
+                layout.addWidget(widget)
+
+                line_edit = self.make_line_edit(param['name'], row,
+                                                param['min'], param['max'],
+                                                double_not_int=True)
+                layout.addWidget(line_edit)
+                self.layout.addLayout(layout, row, 1)
+
             elif param['type'] == 'int':
                 # TODO(lucasw) also have qspinbox or qdoublespinbox
                 if param['edit_method'] == '':
+                    layout = QHBoxLayout()
                     widget = QSlider()
                     widget.setValue(param['default'])
                     widget.setOrientation(QtCore.Qt.Horizontal)
@@ -169,6 +212,12 @@ class DrSingle(Plugin):
                     widget.setMaximum((param['max']))
                     self.connections[param['name']] = partial(self.value_changed, param['name'])
                     widget.valueChanged.connect(self.connections[param['name']])
+                    layout.addWidget(widget)
+                    line_edit = self.make_line_edit(param['name'], row,
+                                                    param['min'], param['max'],
+                                                   double_not_int=False)
+                    layout.addWidget(line_edit)
+                    self.layout.addLayout(layout, row, 1)
                 else:  # enum
                     widget = QComboBox()
                     # edit_method is actually a long string that has to be interpretted
@@ -185,19 +234,16 @@ class DrSingle(Plugin):
                     self.connections[param['name']] = partial(self.enum_changed,
                                                               param['name'], values)
                     widget.currentIndexChanged.connect(self.connections[param['name']])
-
+                    self.add_label(param['name'], row)
+                    self.layout.addWidget(widget, row, 1)
                 self.use_div[param['name']] = False
             else:
                 rospy.logerr(param)
 
             if widget:
-                self.layout.addWidget(widget, row, 1)
                 self.widget[param['name']] = widget
-                val_label = QLabel()
-                val_label.setFixedWidth(100)
                 # val_label.setText("0")
-                self.layout.addWidget(val_label, row, 2)
-                self.val_label[param['name']] = val_label
+                # self.layout.addWidget(val_label, row, 2)
                 row += 1
         self.described = True
         self.update_config()
@@ -216,8 +262,9 @@ class DrSingle(Plugin):
         #     return
         # rospy.loginfo(config)
         for param_name in self.config.keys():
-            if param_name in self.val_label.keys() and param_name in self.widget.keys():
-                self.val_label[param_name].setText(str(self.config[param_name]))
+            if param_name in self.widget.keys():
+                if param_name in self.val_label.keys():
+                    self.val_label[param_name].setText(str(self.config[param_name]))
                 # TODO(lucasw) also need to change slider
                 value = self.config[param_name]
                 if type(self.widget[param_name]) is type(QSlider()):
@@ -240,12 +287,18 @@ class DrSingle(Plugin):
     def enum_changed(self, name, values, ind):
         self.changed_value[name] = values[ind]
 
+    def text_changed(self, name):
+        value = float(self.val_label[name].text())
+        self.changed_value[name] = value
+
     def value_changed(self, name, value, use_div=False):
         if use_div:
             value /= self.div
         self.changed_value[name] = value
 
     def update_configuration(self, evt):
+        if rospy.is_shutdown():
+            return
         if self.client is None:
             try:
                 self.client = Client(self.server_name, timeout=0.1,

@@ -33,6 +33,10 @@
      </item>
      <item>
       <widget class="QPushButton" name="refresh_button">
+       <property name="icon">
+        <iconset theme="view-refresh">
+        <normaloff>.</normaloff>.</iconset>
+       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>

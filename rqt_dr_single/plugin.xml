@@ -13,7 +13,7 @@
       </group>
       -->
       <label>Single Dynamic Reconfigure</label>
-      <icon type="theme">system-help</icon>
+      <icon type="theme">accessories-text-editor</icon>
       <statustip>Interact with a single dynamic reconfigure server.</statustip>
     </qtgui>
   </class>
