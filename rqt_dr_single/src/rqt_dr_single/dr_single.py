@@ -66,8 +66,8 @@ class DrSingle(Plugin):
         self.do_update_description.connect(self.update_description)
         self.div = 100.0
 
-        self.server_name = rospy.get_param("~server", "")
-        if len(self.server_name) == 0 or self.server_name[0] != '/':
+        self.server_name = rospy.get_param("~server", None)
+        if self.server_name is not None and self.server_name[0] != '/':
             self.server_name = rospy.get_namespace() + self.server_name
 
         self.refresh_button = self._widget.findChild(QPushButton, 'refresh_button')
@@ -89,15 +89,17 @@ class DrSingle(Plugin):
         self.server_combobox.currentIndexChanged.disconnect(self.server_changed)
         self.server_combobox.clear()
         rospy.loginfo(self.server_name)
-        self.server_combobox.addItem(self.server_name)
+        if self.server_name is not None:
+            self.server_combobox.addItem(self.server_name)
         dr_list = []
         for topic in topics:
             if topic[1] == 'dynamic_reconfigure/ConfigDescription':
                 server_name = topic[0][:topic[0].rfind('/')]
                 if server_name != self.server_name:
                     dr_list.append(server_name)
-                # if self.server_name == "/":
-                #    self.server_name = server_name
+                # default to choosing the first one
+                # if self.server_name is None:
+                #     self.server_name = server_name
         self.server_combobox.addItems(dr_list)
         self.server_combobox.currentIndexChanged.connect(self.server_changed)
 
@@ -150,8 +152,15 @@ class DrSingle(Plugin):
 
     def update_description(self, description):
         # clear the layout
+        rospy.loginfo("clearing layout " + str(self.layout.count()))
         for i in reversed(range(self.layout.count())):
-            self.layout.itemAt(i).widget().setParent(None)
+            layout = self.layout.itemAt(i).layout()
+            if layout:
+                for j in reversed(range(layout.count())):
+                    layout.itemAt(j).widget().setParent(None)
+                self.layout.itemAt(i).layout().setParent(None)
+            elif self.layout.itemAt(i).widget():
+                self.layout.itemAt(i).widget().setParent(None)
         # TODO(lucasw) this has the min and max values and types from which to 
         # generate the gui
         # rospy.loginfo(description)
@@ -323,14 +332,18 @@ class DrSingle(Plugin):
         pass
 
     def save_settings(self, plugin_settings, instance_settings):
-        # TODO save intrinsic configuration, usually using:
-        # instance_settings.set_value(k, v)
-        pass
+        rospy.loginfo("saving server " + self.server_name)
+        instance_settings.set_value('server_name', self.server_name)
+        # goes to ~/.config/ros.org/rqt_gui.ini, or into .perspective
 
     def restore_settings(self, plugin_settings, instance_settings):
-        # TODO restore intrinsic configuration, usually using:
-        # v = instance_settings.value(k)
-        pass
+        rospy.loginfo("restore " + str(self.server_name))
+        if instance_settings.contains('server_name') and self.server_name is None:
+            self.server_name = instance_settings.value('server_name')
+            rospy.loginfo("restore server " + self.server_name)
+            self.update_topic_list()
+        if self.server_name is None:
+            self.server_changed(0)
 
     #def trigger_configuration(self):
         # Comment in to signal that the plugin has a way to configure
