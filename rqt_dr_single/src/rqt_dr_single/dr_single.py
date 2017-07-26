@@ -151,6 +151,8 @@ class DrSingle(Plugin):
         return val_edit
 
     def update_description(self, description):
+        if rospy.is_shutdown():
+            return
         # clear the layout
         rospy.loginfo("clearing layout " + str(self.layout.count()))
         for i in reversed(range(self.layout.count())):
