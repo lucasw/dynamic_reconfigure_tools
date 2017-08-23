@@ -152,6 +152,11 @@ install(FILES
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
+install(FILES
+  resource/dr_single.ui
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/resource
+)
+
 #############
 ## Testing ##
 #############
