@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package>
+  <name>rviz_dr_single</name>
+  <version>0.0.0</version>
+  <description>The rviz_dr_single package provides an rviz front end to a single dynamic reconfigure server, and will handle the server going down then returning gracefully.</description>
+
+  <maintainer email="wsacul@gmail.com">Lucas Walter</maintainer>
+  <license>BSD</license>
+  <!-- <url type="website">http://wiki.ros.org/dynamic_reconfigure_tools</url> -->
+  <!-- <author email="jane.doe@example.com">Jane Doe</author> -->
+
+  <!-- Use build_depend for packages you need at compile time: -->
+  <!-- Use buildtool_depend for build tool packages: -->
+  <!-- Use run_depend for packages you need at runtime: -->
+  <!-- Use test_depend for packages you need only for testing: -->
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>dynamic_reconfigure</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>rviz</build_depend>
+  <run_depend>dynamic_reconfigure</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>rviz</run_depend>
+
+  <export>
+    <rviz plugin="${prefix}/plugin.xml"/>
+  </export>
+</package>
