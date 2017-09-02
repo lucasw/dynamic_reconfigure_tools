@@ -85,6 +85,7 @@ class DrSingle(Plugin):
         self.update_timer = rospy.Timer(rospy.Duration(0.05), self.update_configuration)
 
     def update_topic_list(self):
+        # TODO(lucasw) if the roscore goes down, this throws a socket error
         topics = rospy.get_published_topics()
         self.server_combobox.currentIndexChanged.disconnect(self.server_changed)
         self.server_combobox.clear()
@@ -279,7 +280,12 @@ class DrSingle(Plugin):
                 # TODO(lucasw) also need to change slider
                 value = self.config[param_name]
                 if type(self.widget[param_name]) is type(QSlider()):
-                    self.widget[param_name].valueChanged.disconnect()
+                    try:
+                        self.widget[param_name].valueChanged.disconnect()
+                    except TypeError as e:
+                        # TOOD(lucasw) not sure in what circumstances this fails
+                        rospy.logwarn(param_name + " disconnect failed " + str(e))
+                        # TODO(lucasw) if that failed will the connect work?
                     if self.use_div[param_name]:
                         value = value * self.div
                     self.widget[param_name].setValue(value)
