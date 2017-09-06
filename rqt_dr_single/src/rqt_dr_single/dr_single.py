@@ -11,6 +11,7 @@ from python_qt_binding import loadUi
 # ImportError: cannot import name QCheckBox
 # from python_qt_binding.QtGui import QCheckBox, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QSlider, QWidget
 # this works in qt5 kinetic
+from python_qt_binding.QtCore import Signal
 from python_qt_binding.QtGui import QDoubleValidator, QIntValidator
 from python_qt_binding.QtWidgets import QCheckBox, QComboBox, QGridLayout
 from python_qt_binding.QtWidgets import QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QSlider, QWidget
@@ -20,6 +21,7 @@ from std_msgs.msg import Int32
 
 class DrSingle(Plugin):
     do_update_description = QtCore.pyqtSignal(list)
+    do_update_checkbox = QtCore.pyqtSignal(bool)
 
     def __init__(self, context):
         super(DrSingle, self).__init__(context)
@@ -64,6 +66,7 @@ class DrSingle(Plugin):
         self.changed_value = {}
         self.reset()
         self.do_update_description.connect(self.update_description)
+        self.do_update_checkbox.connect(self.update_checkbox)
         self.div = 100.0
 
         self.server_name = rospy.get_param("~server", None)
@@ -80,7 +83,6 @@ class DrSingle(Plugin):
         self.server_combobox.currentIndexChanged.connect(self.server_changed)
         self.update_topic_list()
 
-        # Need to put this is timered callback
         self.client = None
         self.update_timer = rospy.Timer(rospy.Duration(0.05), self.update_configuration)
 
@@ -313,6 +315,9 @@ class DrSingle(Plugin):
             value /= self.div
         self.changed_value[name] = value
 
+    def update_checkbox(self, value):
+        self.connected_checkbox.setChecked(value)
+
     def update_configuration(self, evt):
         if rospy.is_shutdown():
             return
@@ -321,9 +326,9 @@ class DrSingle(Plugin):
                 self.client = Client(self.server_name, timeout=0.1,
                                      config_callback=self.config_callback,
                                      description_callback=self.description_callback)
+                self.do_update_checkbox.emit(True)
             except:  # ROSException:
                 return
-        self.connected_checkbox.setChecked(True)
 
         if len(self.changed_value.keys()) > 0:
             try:
@@ -331,7 +336,7 @@ class DrSingle(Plugin):
             except:
                 rospy.logerr("lost connection to server")
                 self.client = None
-                self.connected_checkbox.setChecked(False)
+                self.do_update_checkbox.emit(False)
                 return
             self.changed_value = {}
 
