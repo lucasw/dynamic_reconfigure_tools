@@ -21,6 +21,7 @@ from std_msgs.msg import Int32
 
 class DrSingle(Plugin):
     do_update_description = QtCore.pyqtSignal(list)
+    do_update_config = QtCore.pyqtSignal()
     do_update_checkbox = QtCore.pyqtSignal(bool)
 
     def __init__(self, context):
@@ -66,6 +67,7 @@ class DrSingle(Plugin):
         self.changed_value = {}
         self.reset()
         self.do_update_description.connect(self.update_description)
+        self.do_update_config.connect(self.update_config)
         self.do_update_checkbox.connect(self.update_checkbox)
         self.div = 100.0
 
@@ -84,7 +86,7 @@ class DrSingle(Plugin):
         self.update_topic_list()
 
         self.client = None
-        self.update_timer = rospy.Timer(rospy.Duration(0.05), self.update_configuration)
+        self.update_timer = rospy.Timer(rospy.Duration(0.05), self.update_dr_configuration)
 
     def update_topic_list(self):
         # TODO(lucasw) if the roscore goes down, this throws a socket error
@@ -267,7 +269,7 @@ class DrSingle(Plugin):
         # the description is updated after the config, so need to store it.
         self.config = config
         if self.described:
-            self.update_config()
+            self.do_update_config.emit()
 
     def update_config(self):
         if not self.config:
@@ -318,7 +320,7 @@ class DrSingle(Plugin):
     def update_checkbox(self, value):
         self.connected_checkbox.setChecked(value)
 
-    def update_configuration(self, evt):
+    def update_dr_configuration(self, evt):
         if rospy.is_shutdown():
             return
         if self.client is None:
