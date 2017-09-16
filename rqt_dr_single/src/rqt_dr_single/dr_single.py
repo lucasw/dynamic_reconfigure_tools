@@ -61,9 +61,8 @@ class DrSingle(Plugin):
             self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
         # Add widget to the user interface
         context.add_widget(self._widget)
-        self.parent_layout = self._widget.findChild(QVBoxLayout, 'vertical_layout')
-        self.layout = QGridLayout()
-        self.parent_layout.addLayout(self.layout)
+        # self.parent_layout = self._widget.findChild(QVBoxLayout, 'vertical_layout')
+        self.layout = self._widget.findChild(QGridLayout, 'grid_layout')
         self.changed_value = {}
         self.reset()
         self.do_update_description.connect(self.update_description)
