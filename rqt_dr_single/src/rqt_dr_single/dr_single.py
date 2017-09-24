@@ -2,6 +2,7 @@
 import os
 import rospkg
 import rospy
+import time
 
 from dynamic_reconfigure.client import Client
 from functools import partial
@@ -21,8 +22,9 @@ from std_msgs.msg import Int32
 
 class DrSingle(Plugin):
     do_update_description = QtCore.pyqtSignal(list)
-    do_update_config = QtCore.pyqtSignal()
+    do_update_config = QtCore.pyqtSignal(dict)
     do_update_checkbox = QtCore.pyqtSignal(bool)
+    do_update_dr = QtCore.pyqtSignal()
 
     def __init__(self, context):
         super(DrSingle, self).__init__(context)
@@ -68,6 +70,7 @@ class DrSingle(Plugin):
         self.do_update_description.connect(self.update_description)
         self.do_update_config.connect(self.update_config)
         self.do_update_checkbox.connect(self.update_checkbox)
+        self.do_update_dr.connect(self.update_dr)
         self.div = 100.0
 
         self.server_name = rospy.get_param("~server", None)
@@ -85,7 +88,20 @@ class DrSingle(Plugin):
         self.update_topic_list()
 
         self.client = None
-        self.update_timer = rospy.Timer(rospy.Duration(0.05), self.update_dr_configuration)
+        # TODO(lucasw) can't use timers in guis, there might be a sim clock that
+        # is paused.  (How many other nodes in other projects are going to fail
+        # because of that?)
+        # self.update_timer = rospy.Timer(rospy.Duration(0.05), self.update_dr_configuration)
+        # TODO(lucasw) is this the right thread to be calling this?
+        # If this is qt then need to trigger a ros callback-
+        # can I do a single shot rospy.Timer with sim_clock paused?
+        self.do_update_dr.emit()
+
+    def update_dr(self):
+        if True:  # while True:
+            self.update_dr_configuration(None)
+            # TODO(lucasw) need to call this repeatedly, setup time callback here
+            # time.sleep(0.05)
 
     def update_topic_list(self):
         # TODO(lucasw) if the roscore goes down, this throws a socket error
@@ -107,6 +123,10 @@ class DrSingle(Plugin):
         self.server_combobox.addItems(dr_list)
         self.server_combobox.currentIndexChanged.connect(self.server_changed)
 
+        # force the gui to be refreshed
+        self.client = None
+        self.update_dr_configuration(None)
+
     def server_changed(self, index):
         new_server = self.server_combobox.currentText()
         rospy.loginfo(new_server)
@@ -115,6 +135,7 @@ class DrSingle(Plugin):
             self.client = None
             self.changed_value = {}
             self.reset()
+            self.do_update_dr.emit()
 
     def description_callback(self, description):
         # self.description = description
@@ -122,7 +143,6 @@ class DrSingle(Plugin):
 
     def reset(self):
         self.described = False
-        self.config = None
         self.widget = {}
         self.connections = {}
         self.use_div = {}
@@ -154,11 +174,12 @@ class DrSingle(Plugin):
         self.val_label[name] = val_edit
         return val_edit
 
+    # Setup the gui according to the dr description
     def update_description(self, description):
         if rospy.is_shutdown():
             return
         # clear the layout
-        rospy.loginfo("clearing layout " + str(self.layout.count()))
+        # rospy.loginfo("clearing layout " + str(self.layout.count()))
         for i in reversed(range(self.layout.count())):
             layout = self.layout.itemAt(i).layout()
             if layout:
@@ -261,27 +282,25 @@ class DrSingle(Plugin):
                 # self.layout.addWidget(val_label, row, 2)
                 row += 1
         self.described = True
-        self.update_config()
 
     def config_callback(self, config):
         # The first config/description callback happen out of order-
         # the description is updated after the config, so need to store it.
-        self.config = config
         if self.described:
-            self.do_update_config.emit()
+            self.do_update_config.emit(config)
 
-    def update_config(self):
-        if not self.config:
+    def update_config(self, config):
+        if not config:
             return
         # if not self.client:
         #     return
         # rospy.loginfo(config)
-        for param_name in self.config.keys():
+        for param_name in config.keys():
             if param_name in self.widget.keys():
                 if param_name in self.val_label.keys():
-                    self.val_label[param_name].setText(str(self.config[param_name]))
+                    self.val_label[param_name].setText(str(config[param_name]))
                 # TODO(lucasw) also need to change slider
-                value = self.config[param_name]
+                value = config[param_name]
                 if type(self.widget[param_name]) is type(QSlider()):
                     try:
                         self.widget[param_name].valueChanged.disconnect()
@@ -299,22 +318,29 @@ class DrSingle(Plugin):
                     self.widget[param_name].setChecked(value)
                 elif type(self.widget[param_name]) is type(QComboBox()):
                     self.widget[param_name].setCurrentIndex(value)
-        self.config = None
 
     def text_resend(self, name):
         self.changed_value[name] = self.widget[name].text()
+        # TODO(lucasw) wanted to avoid these with a timered loop, but doing it direct for now
+        self.do_update_dr.emit()
 
     def enum_changed(self, name, values, ind):
         self.changed_value[name] = values[ind]
+        # TODO(lucasw) wanted to avoid these with a timered loop, but doing it direct for now
+        self.do_update_dr.emit()
 
     def text_changed(self, name):
         value = float(self.val_label[name].text())
         self.changed_value[name] = value
+        # TODO(lucasw) wanted to avoid these with a timered loop, but doing it direct for now
+        self.do_update_dr.emit()
 
     def value_changed(self, name, value, use_div=False):
         if use_div:
             value /= self.div
         self.changed_value[name] = value
+        # TODO(lucasw) wanted to avoid these with a timered loop, but doing it direct for now
+        self.do_update_dr.emit()
 
     def update_checkbox(self, value):
         self.connected_checkbox.setChecked(value)
@@ -324,6 +350,8 @@ class DrSingle(Plugin):
             return
         if self.client is None:
             try:
+                # TODO(lucasw) surely this timeout has nothing to do with ros time
+                # and instead uses wall time.
                 self.client = Client(self.server_name, timeout=0.1,
                                      config_callback=self.config_callback,
                                      description_callback=self.description_callback)
