@@ -12,7 +12,7 @@ from python_qt_binding import loadUi
 # ImportError: cannot import name QCheckBox
 # from python_qt_binding.QtGui import QCheckBox, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QSlider, QWidget
 # this works in qt5 kinetic
-from python_qt_binding.QtCore import Signal
+from python_qt_binding.QtCore import QTimer, Signal
 from python_qt_binding.QtGui import QDoubleValidator, QIntValidator
 from python_qt_binding.QtWidgets import QCheckBox, QComboBox, QGridLayout
 from python_qt_binding.QtWidgets import QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QSlider, QWidget
@@ -70,7 +70,7 @@ class DrSingle(Plugin):
         self.do_update_description.connect(self.update_description)
         self.do_update_config.connect(self.update_config)
         self.do_update_checkbox.connect(self.update_checkbox)
-        self.do_update_dr.connect(self.update_dr)
+        # self.do_update_dr.connect(self.update_dr)
         self.div = 100.0
 
         self.server_name = rospy.get_param("~server", None)
@@ -88,14 +88,17 @@ class DrSingle(Plugin):
         self.update_topic_list()
 
         self.client = None
-        # TODO(lucasw) can't use timers in guis, there might be a sim clock that
+        # TODO(lucasw) can't use ros timers in guis, there might be a sim clock that
         # is paused.  (How many other nodes in other projects are going to fail
         # because of that?)
         # self.update_timer = rospy.Timer(rospy.Duration(0.05), self.update_dr_configuration)
         # TODO(lucasw) is this the right thread to be calling this?
         # If this is qt then need to trigger a ros callback-
         # can I do a single shot rospy.Timer with sim_clock paused?
-        self.do_update_dr.emit()
+        # self.do_update_dr.emit()
+        self.timer = QTimer()
+        self.timer.start(100)
+        self.timer.timeout.connect(self.update_dr)
 
     def update_dr(self):
         if True:  # while True:
@@ -322,25 +325,25 @@ class DrSingle(Plugin):
     def text_resend(self, name):
         self.changed_value[name] = self.widget[name].text()
         # TODO(lucasw) wanted to avoid these with a timered loop, but doing it direct for now
-        self.do_update_dr.emit()
+        # self.do_update_dr.emit()
 
     def enum_changed(self, name, values, ind):
         self.changed_value[name] = values[ind]
         # TODO(lucasw) wanted to avoid these with a timered loop, but doing it direct for now
-        self.do_update_dr.emit()
+        # self.do_update_dr.emit()
 
     def text_changed(self, name):
         value = float(self.val_label[name].text())
         self.changed_value[name] = value
         # TODO(lucasw) wanted to avoid these with a timered loop, but doing it direct for now
-        self.do_update_dr.emit()
+        # self.do_update_dr.emit()
 
     def value_changed(self, name, value, use_div=False):
         if use_div:
             value /= self.div
         self.changed_value[name] = value
         # TODO(lucasw) wanted to avoid these with a timered loop, but doing it direct for now
-        self.do_update_dr.emit()
+        # self.do_update_dr.emit()
 
     def update_checkbox(self, value):
         self.connected_checkbox.setChecked(value)
