@@ -147,6 +147,8 @@ class DrSingle(Plugin):
     def reset(self):
         self.described = False
         self.widget = {}
+        self.enum_values = {}
+        self.enum_inds = {}
         self.connections = {}
         self.use_div = {}
         self.val_label = {}
@@ -262,16 +264,18 @@ class DrSingle(Plugin):
                     # edit_method is actually a long string that has to be interpretted
                     # back into a list
                     enums = eval(param['edit_method'])['enum']
-                    values = {}
+                    self.enum_values[param['name']] = {}
+                    self.enum_inds[param['name']] = {}
                     count = 0
                     for enum in enums:
                         name = enum['name'] + ' (' + str(enum['value']) + ')'
                         widget.addItem(name)
-                        values[count] = enum['value']
+                        self.enum_values[param['name']][count] = enum['value']
+                        self.enum_inds[param['name']][enum['value']] = count
                         count += 1
-                        # print enum
+                        # print count, enum
                     self.connections[param['name']] = partial(self.enum_changed,
-                                                              param['name'], values)
+                                                              param['name'])
                     widget.currentIndexChanged.connect(self.connections[param['name']])
                     self.add_label(param['name'], row)
                     self.layout.addWidget(widget, row, 1)
@@ -320,15 +324,20 @@ class DrSingle(Plugin):
                 elif type(self.widget[param_name]) is type(QCheckBox()):
                     self.widget[param_name].setChecked(value)
                 elif type(self.widget[param_name]) is type(QComboBox()):
-                    self.widget[param_name].setCurrentIndex(value)
+                    self.widget[param_name].setCurrentIndex(self.enum_inds[param_name][value])
 
     def text_resend(self, name):
         self.changed_value[name] = self.widget[name].text()
         # TODO(lucasw) wanted to avoid these with a timered loop, but doing it direct for now
         # self.do_update_dr.emit()
 
-    def enum_changed(self, name, values, ind):
-        self.changed_value[name] = values[ind]
+    def enum_changed(self, name, ind):
+        if not ind in self.enum_values[name].keys():
+            return
+        #     rospy.logerr(name + " values ind mismatch " + str(ind) + " " +
+        #                  str(self.enum_values[name].keys()))
+        #     return
+        self.changed_value[name] = self.enum_values[name][ind]
         # TODO(lucasw) wanted to avoid these with a timered loop, but doing it direct for now
         # self.do_update_dr.emit()
 
