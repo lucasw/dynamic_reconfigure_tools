@@ -70,7 +70,7 @@ class DrSingle(Plugin):
         self.do_update_description.connect(self.update_description)
         self.do_update_config.connect(self.update_config)
         self.do_update_checkbox.connect(self.update_checkbox)
-        # self.do_update_dr.connect(self.update_dr)
+        self.do_update_dr.connect(self.update_dr)
         self.div = 100.0
 
         self.server_name = rospy.get_param("~server", None)
@@ -85,9 +85,11 @@ class DrSingle(Plugin):
         self.connected_checkbox.setEnabled(False)
         self.server_combobox = self._widget.findChild(QComboBox, 'server_combobox')
         self.server_combobox.currentIndexChanged.connect(self.server_changed)
+        self.client = None
         self.update_topic_list()
 
-        self.client = None
+        # try to connect to saved dr server
+        self.connect_dr()
         # TODO(lucasw) can't use ros timers in guis, there might be a sim clock that
         # is paused.  (How many other nodes in other projects are going to fail
         # because of that?)
@@ -96,15 +98,16 @@ class DrSingle(Plugin):
         # If this is qt then need to trigger a ros callback-
         # can I do a single shot rospy.Timer with sim_clock paused?
         # self.do_update_dr.emit()
-        self.timer = QTimer()
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_dr_from_emit)
         self.timer.start(100)
-        self.timer.timeout.connect(self.update_dr)
+
+    def update_dr_from_emit(self):
+        self.do_update_dr.emit()
 
     def update_dr(self):
-        if True:  # while True:
-            self.update_dr_configuration(None)
-            # TODO(lucasw) need to call this repeatedly, setup time callback here
-            # time.sleep(0.05)
+        self.update_dr_configuration(None)
+        # TODO(lucasw) need to call this repeatedly, setup time callback here
 
     def update_topic_list(self):
         # TODO(lucasw) if the roscore goes down, this throws a socket error
@@ -127,7 +130,9 @@ class DrSingle(Plugin):
         self.server_combobox.currentIndexChanged.connect(self.server_changed)
 
         # force the gui to be refreshed
-        self.client = None
+        # self.client = None
+        if self.client is None:
+            self.connect_dr()
         self.update_dr_configuration(None)
 
     def server_changed(self, index):
@@ -138,13 +143,14 @@ class DrSingle(Plugin):
             self.client = None
             self.changed_value = {}
             self.reset()
-            self.do_update_dr.emit()
+            self.refresh_button.click()
 
     def description_callback(self, description):
         # self.description = description
         self.do_update_description.emit(description)
 
     def reset(self):
+        rospy.logwarn("reset")
         self.described = False
         self.widget = {}
         self.enum_values = {}
@@ -152,6 +158,7 @@ class DrSingle(Plugin):
         self.connections = {}
         self.use_div = {}
         self.val_label = {}
+        self.config = None
 
     def add_label(self, name, row):
         # TODO(lucasw) don't really need this
@@ -289,19 +296,24 @@ class DrSingle(Plugin):
                 # self.layout.addWidget(val_label, row, 2)
                 row += 1
         self.described = True
+        rospy.loginfo("updated description")
+        if self.config:
+            self.update_config(self.config)
 
     def config_callback(self, config):
         # The first config/description callback happen out of order-
         # the description is updated after the config, so need to store it.
-        if self.described:
-            self.do_update_config.emit(config)
+        self.do_update_config.emit(config)
 
     def update_config(self, config):
         if not config:
             return
+        if not self.described:
+            self.config = config
+            return
         # if not self.client:
         #     return
-        # rospy.loginfo(config)
+        rospy.logdebug(config)
         for param_name in config.keys():
             if param_name in self.widget.keys():
                 if param_name in self.val_label.keys():
@@ -357,25 +369,30 @@ class DrSingle(Plugin):
     def update_checkbox(self, value):
         self.connected_checkbox.setChecked(value)
 
-    def update_dr_configuration(self, evt):
-        if rospy.is_shutdown():
+    def connect_dr(self):
+        if self.server_name is None:
             return
-        if self.client is None:
-            try:
-                # TODO(lucasw) surely this timeout has nothing to do with ros time
-                # and instead uses wall time.
-                self.client = Client(self.server_name, timeout=0.1,
-                                     config_callback=self.config_callback,
-                                     description_callback=self.description_callback)
-                self.do_update_checkbox.emit(True)
-            except:  # ROSException:
-                return
+        try:
+            # TODO(lucasw) surely this timeout has nothing to do with ros time
+            # and instead uses wall time.
+            # This takes up 0.3 second no matter what
+            # and seems to block the main gui thread  though I haven't
+            # exhausted options for running it in other threads
+            self.client = Client(self.server_name, timeout=0.2,
+                                 config_callback=self.config_callback,
+                                 description_callback=self.description_callback)
+            self.do_update_checkbox.emit(True)
+        except:  # ROSException:
+            rospy.logdebug("no server " + str(self.server_name))
 
+    def update_dr_configuration(self, evt):
+        if self.client is None:
+            return
         if len(self.changed_value.keys()) > 0:
             try:
                 self.client.update_configuration(self.changed_value)
             except:
-                rospy.logerr("lost connection to server")
+                rospy.logerr("lost connection to server " + str(self.server_name))
                 self.client = None
                 self.do_update_checkbox.emit(False)
                 return
@@ -383,7 +400,7 @@ class DrSingle(Plugin):
 
     def shutdown_plugin(self):
         # TODO unregister all publishers here
-        pass
+        self.timer.stop()
 
     def save_settings(self, plugin_settings, instance_settings):
         rospy.loginfo("saving server " + self.server_name)
@@ -391,7 +408,6 @@ class DrSingle(Plugin):
         # goes to ~/.config/ros.org/rqt_gui.ini, or into .perspective
 
     def restore_settings(self, plugin_settings, instance_settings):
-        rospy.loginfo("restore " + str(self.server_name))
         if instance_settings.contains('server_name') and self.server_name is None:
             self.server_name = instance_settings.value('server_name')
             rospy.loginfo("restore server " + self.server_name)
