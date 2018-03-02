@@ -1,0 +1,9 @@
+<library path="lib/libdynamic_reconfigure_example">
+  <class name="dynamic_reconfigure_example/ExampleServer"
+      type="dynamic_reconfigure_example::ExampleServer"
+      base_class_type="nodelet::Nodelet">
+    <description>
+      example C++ nodelet dynamic reconfigure server
+    </description>
+  </class>
+</library>

@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package>
+  <name>dynamic_reconfigure_example</name>
+  <version>0.0.1</version>
+  <description>Example C++/python node/nodelet dynamic reconfigure servers and clients
+  </description>
+
+  <maintainer email="wsacul@gmail.com">Lucas Walter</maintainer>
+
+  <license>BSD 3.0</license>
+
+  <url type="website">https://github.com/lucasw/dynamic_reconfigure_example</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>dynamic_reconfigure</build_depend>
+  <build_depend>nodelet</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <run_depend>dynamic_reconfigure</run_depend>
+  <run_depend>nodelet</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>std_msgs</run_depend>
+
+  <export>
+    <nodelet plugin="${prefix}/nodelet_dynamic_reconfigure_example.xml" />
+  </export>
+
+</package>
