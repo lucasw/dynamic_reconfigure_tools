@@ -37,6 +37,9 @@ if(catkin_EXPORTED_LIBRARIES)
   add_dependencies(dynamic_reconfigure_example ${catkin_EXPORTED_LIBRARIES})
 endif()
 
+add_executable(example_server_node_wrapper src/example_server_node_wrapper.cpp)
+target_link_libraries(example_server_node_wrapper ${catkin_LIBRARIES})
+
 add_executable(example_server_node src/example_server_node.cpp)
 target_link_libraries(example_server_node ${catkin_LIBRARIES})
 

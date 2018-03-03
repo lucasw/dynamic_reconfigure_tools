@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017 Lucas Walter
- * November 2017
+ * June 2017
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,17 +28,48 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <nodelet/loader.h>
+#include <dynamic_reconfigure/server.h>
+#include <dynamic_reconfigure_example/ExampleConfig.h>
 #include <ros/ros.h>
-#include <string>
+
+class ExampleServer
+{
+  ros::NodeHandle nh_;
+  dynamic_reconfigure_example::ExampleConfig config_;
+  typedef dynamic_reconfigure::Server<dynamic_reconfigure_example::ExampleConfig> ReconfigureServer;
+  boost::shared_ptr< ReconfigureServer > server_;
+  void callback(dynamic_reconfigure_example::ExampleConfig& config,
+      uint32_t level);
+
+  boost::recursive_mutex dr_mutex_;
+
+  public:
+  ExampleServer();
+  ~ExampleServer();
+};
+
+ExampleServer::ExampleServer() :
+  nh_("~")
+{
+  server_.reset(new ReconfigureServer(dr_mutex_, nh_));
+  dynamic_reconfigure::Server<dynamic_reconfigure_example::ExampleConfig>::CallbackType cbt =
+      boost::bind(&ExampleServer::callback, this, _1, _2);
+  server_->setCallback(cbt);
+}
+
+ExampleServer::~ExampleServer()
+{
+}
+
+void ExampleServer::callback(dynamic_reconfigure_example::ExampleConfig& config,
+      uint32_t level)
+{
+  ROS_INFO_STREAM(config.str_param);
+}
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "example_server");
-  nodelet::Loader nodelet;
-  nodelet::M_string remap(ros::names::getRemappings());
-  nodelet::V_string nargv;
-  std::string nodelet_name = ros::this_node::getName();
-  nodelet.load(nodelet_name, "dynamic_reconfigure_example/ExampleServer", remap, nargv);
+  ros::init(argc, argv, "example_server_node");
+  ExampleServer example_server;
   ros::spin();
 }

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017 Lucas Walter
- * June 2017
+ * November 2017
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,33 +28,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef IMAGE_MANIP_IIR_IMAGE_H
-#define IMAGE_MANIP_IIR_IMAGE_H
-
-#include <dynamic_reconfigure/server.h>
-#include <dynamic_reconfigure_example/ExampleConfig.h>
-#include <nodelet/nodelet.h>
+#include <nodelet/loader.h>
 #include <ros/ros.h>
+#include <string>
 
-namespace dynamic_reconfigure_example
+int main(int argc, char** argv)
 {
-
-class ExampleServer : public nodelet::Nodelet
-{
-  dynamic_reconfigure_example::ExampleConfig config_;
-  typedef dynamic_reconfigure::Server<dynamic_reconfigure_example::ExampleConfig> ReconfigureServer;
-  boost::shared_ptr< ReconfigureServer > server_;
-  void callback(dynamic_reconfigure_example::ExampleConfig& config,
-      uint32_t level);
-
-  boost::recursive_mutex dr_mutex_;
-
-public:
-  virtual void onInit();
-  ExampleServer();
-  ~ExampleServer();
-};
-
-}  // namespace dynamic_reconfigure_example
-
-#endif  // DYNAMIC_RECONFIGURE_EXAMPLE_EXAMPLE_SERVER_H
+  ros::init(argc, argv, "example_server");
+  nodelet::Loader nodelet;
+  nodelet::M_string remap(ros::names::getRemappings());
+  nodelet::V_string nargv;
+  std::string nodelet_name = ros::this_node::getName();
+  nodelet.load(nodelet_name, "dynamic_reconfigure_example/ExampleServer", remap, nargv);
+  ros::spin();
+}
