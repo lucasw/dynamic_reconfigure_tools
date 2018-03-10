@@ -77,6 +77,8 @@ class DrSingle(Plugin):
         if self.server_name is not None and self.server_name[0] != '/':
             self.server_name = rospy.get_namespace() + self.server_name
 
+        self.hide_dropdown = rospy.get_param("~hide_dropdown", None)
+
         self.refresh_button = self._widget.findChild(QPushButton, 'refresh_button')
         self.refresh_button.pressed.connect(self.update_topic_list)
 
@@ -114,7 +116,7 @@ class DrSingle(Plugin):
         topics = rospy.get_published_topics()
         self.server_combobox.currentIndexChanged.disconnect(self.server_changed)
         self.server_combobox.clear()
-        rospy.loginfo(self.server_name)
+        rospy.logdebug(self.server_name)
         if self.server_name is not None:
             self.server_combobox.addItem(self.server_name)
         dr_list = []
@@ -150,7 +152,7 @@ class DrSingle(Plugin):
         self.do_update_description.emit(description)
 
     def reset(self):
-        rospy.logwarn("reset")
+        rospy.logdebug("reset")
         self.described = False
         self.widget = {}
         self.enum_values = {}
@@ -403,17 +405,29 @@ class DrSingle(Plugin):
         self.timer.stop()
 
     def save_settings(self, plugin_settings, instance_settings):
-        rospy.loginfo("saving server " + self.server_name)
+        rospy.logdebug("saving server " + self.server_name)
         instance_settings.set_value('server_name', self.server_name)
+        instance_settings.set_value('hide_dropdown', self.hide_dropdown)
         # goes to ~/.config/ros.org/rqt_gui.ini, or into .perspective
 
+    # This is called after init
     def restore_settings(self, plugin_settings, instance_settings):
         if instance_settings.contains('server_name') and self.server_name is None:
             self.server_name = instance_settings.value('server_name')
-            rospy.loginfo("restore server " + self.server_name)
+            rospy.logdebug("restore server " + self.server_name)
             self.update_topic_list()
         if self.server_name is None:
             self.server_changed(0)
+
+        if instance_settings.contains('hide_dropdown') and self.hide_dropdown is None:
+            # instance settings don't resolve as True of False boolean
+            # rospy.loginfo(type(instance_settings.value('hide_dropdown'))) # 'unicode'
+            self.hide_dropdown = instance_settings.value('hide_dropdown') == 'true'
+        if self.hide_dropdown is None:
+            self.hide_dropdown = False
+            rospy.loginfo(self.hide_dropdown)
+        if self.hide_dropdown:
+            self.server_combobox.hide()
 
     #def trigger_configuration(self):
         # Comment in to signal that the plugin has a way to configure
