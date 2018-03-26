@@ -425,7 +425,6 @@ class DrSingle(Plugin):
             self.hide_dropdown = instance_settings.value('hide_dropdown') == 'true'
         if self.hide_dropdown is None:
             self.hide_dropdown = False
-            rospy.loginfo(self.hide_dropdown)
         if self.hide_dropdown:
             self.server_combobox.hide()
 
