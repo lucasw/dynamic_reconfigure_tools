@@ -3,6 +3,7 @@ project(dynamic_reconfigure_example)
 
 find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
+  message_generation
   nodelet
   roscpp
   roslint
@@ -41,6 +42,20 @@ add_executable(example_server_node_wrapper src/example_server_node_wrapper.cpp)
 target_link_libraries(example_server_node_wrapper ${catkin_LIBRARIES})
 
 add_executable(example_server_node src/example_server_node.cpp)
+add_dependencies(example_server_node ${PROJECT_NAME}_gencfg)
 target_link_libraries(example_server_node ${catkin_LIBRARIES})
 
-# TODO(lucasw) install
+# install
+install(TARGETS
+  example_server_node
+  example_server_node_wrapper
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(FILES
+  nodelet_dynamic_reconfigure_example.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
