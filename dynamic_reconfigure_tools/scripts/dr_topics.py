@@ -17,6 +17,8 @@ from std_msgs.msg import Empty, Float64, Int32
 class DrTopics():
     def __init__(self):
         self.dr_server = None
+        self.delta = None
+        self.timer = rospy.Timer(rospy.Duration(0.1), self.update)
         self.configured_sub = rospy.Subscriber("configured", Empty,
                                                self.config, queue_size=1)
         # TODO(lucasw) this might run concurrently with callback,
@@ -113,9 +115,13 @@ class DrTopics():
     def feedback_callback(self, msg, param):
         self.values[param] = msg.data
         # dict update the dr server
-        delta = {}
-        delta[param] = msg.data
-        self.dr_server.update_configuration(delta)
+        self.delta = {}
+        self.delta[param] = msg.data
+
+    def update(self, evt):
+        if self.delta:
+            self.dr_server.update_configuration(self.delta)
+            self.delta = None
 
 if __name__ == "__main__":
     rospy.init_node("dr_topics")
