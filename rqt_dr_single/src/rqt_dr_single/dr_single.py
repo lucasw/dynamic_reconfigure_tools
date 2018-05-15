@@ -401,6 +401,7 @@ class DrSingle(Plugin):
             self.changed_value = {}
 
     def shutdown_plugin(self):
+        self.reset()
         # TODO unregister all publishers here
         self.timer.stop()
 
