@@ -54,6 +54,7 @@ void ExampleServer::callback(dynamic_reconfigure_example::ExampleConfig& config,
       uint32_t level)
 {
   ROS_INFO_STREAM(config.str_param);
+  config_ = config;
 }
 
 };  // namespace dynamic_reconfigure_example

@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+
+  <node name="example_server_node" pkg="dynamic_reconfigure_example" type="example_server_node"
+      output="screen" >
+  </node>
+
+</launch>

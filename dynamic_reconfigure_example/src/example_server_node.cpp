@@ -51,10 +51,12 @@ class ExampleServer
 ExampleServer::ExampleServer() :
   nh_("~")
 {
+  ROS_INFO_STREAM(config_.str_param);
   server_.reset(new ReconfigureServer(dr_mutex_, nh_));
   dynamic_reconfigure::Server<dynamic_reconfigure_example::ExampleConfig>::CallbackType cbt =
       boost::bind(&ExampleServer::callback, this, _1, _2);
   server_->setCallback(cbt);
+  ROS_INFO_STREAM(config_.str_param);
 }
 
 ExampleServer::~ExampleServer()
@@ -64,7 +66,8 @@ ExampleServer::~ExampleServer()
 void ExampleServer::callback(dynamic_reconfigure_example::ExampleConfig& config,
       uint32_t level)
 {
-  ROS_INFO_STREAM(config.str_param);
+  ROS_INFO_STREAM(config.str_param << " " << config_.str_param);
+  config_ = config;
 }
 
 int main(int argc, char** argv)
