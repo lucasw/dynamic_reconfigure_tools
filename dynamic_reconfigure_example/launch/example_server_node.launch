@@ -5,4 +5,9 @@
       output="screen" >
   </node>
 
+  <node name="rqt_dr_single" pkg="rqt_dr_single" type="rqt_dr_single"
+      output="screen" >
+    <param name="server" value="example_server_node" />
+  </node>
+
 </launch>
