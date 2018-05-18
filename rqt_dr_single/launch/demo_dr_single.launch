@@ -2,11 +2,11 @@
 <launch>
   <arg name="hangup" default="false"/>
   <!-- start a dynamic reconfigure server -->
-  <node name="example_server" pkg="rqt_dr_single" type="example_server.py"
+  <node name="example_server" pkg="dynamic_reconfigure_example" type="example_server.py"
       output="screen">
     <param name="hangup" value="$(arg hangup)"/>
   </node>
-  <node name="example_server2" pkg="rqt_dr_single" type="example_server.py"
+  <node name="example_server2" pkg="dynamic_reconfigure_example" type="example_server.py"
       output="screen"
       ns="test"/>
 

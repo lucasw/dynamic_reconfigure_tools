@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+
+  <node name="example_server" pkg="dynamic_reconfigure_example" type="example_server.py"
+      output="screen">
+  </node>
+
+  <node name="example_client" pkg="dynamic_reconfigure_example" type="example_client.py"
+      output="screen">
+  </node>
+
+
+
+</launch>
