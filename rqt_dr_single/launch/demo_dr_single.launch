@@ -6,9 +6,11 @@
       output="screen">
     <param name="hangup" value="$(arg hangup)"/>
   </node>
-  <node name="example_server2" pkg="dynamic_reconfigure_example" type="example_server.py"
+
+  <node name="example_server2" pkg="dynamic_reconfigure_example" type="example_server_node"
       output="screen"
-      ns="test"/>
+      ns="test">
+  </node>
 
   <!-- launch an rqt_dr_single to interact with it -->
   <node name="rqt_dr_single" pkg="rqt_dr_single" type="rqt_dr_single"

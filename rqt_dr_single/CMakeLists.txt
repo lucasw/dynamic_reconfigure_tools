@@ -70,10 +70,6 @@ catkin_python_setup()
 #   std_msgs  # Or other packages containing msgs
 # )
 
-generate_dynamic_reconfigure_options(
-  cfg/Example.cfg
-)
-
 ###################################
 ## catkin specific configuration ##
 ###################################

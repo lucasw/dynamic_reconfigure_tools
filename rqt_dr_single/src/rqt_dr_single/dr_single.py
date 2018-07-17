@@ -159,6 +159,7 @@ class DrSingle(Plugin):
         self.enum_inds = {}
         self.connections = {}
         self.use_div = {}
+        self.params = {}
         self.val_label = {}
         self.config = None
 
@@ -172,7 +173,7 @@ class DrSingle(Plugin):
 
     def make_line_edit(self, name, row, vmin, vmax, double_not_int):
         val_edit = QLineEdit()
-        val_edit.setFixedWidth(90)
+        val_edit.setFixedWidth(100)
         # TODO(lucasw) have optional ability to break limits
         if double_not_int:
             val_edit.setValidator(QDoubleValidator(vmin,
@@ -207,6 +208,7 @@ class DrSingle(Plugin):
         # rospy.loginfo(description)
         row = 0
         for param in description:
+            self.params[param['name']] = param
             rospy.logdebug(param['name'] + " " + str(param['min']) + " " +
                            str(param['max']) + " " + str(param['type']))
 
@@ -234,14 +236,16 @@ class DrSingle(Plugin):
                 # TODO(lucasw) also have qspinbox or qdoublespinbox
                 layout = QHBoxLayout()
                 widget = QSlider()
-                widget.setValue(param['default'])
+                slider_val = 0.0
+                if param['min'] != param['max']:
+                    slider_val = self.div * (param['default'] - param['min']) / (param['max'] - param['min'])
+                widget.setValue(slider_val)
                 widget.setOrientation(QtCore.Qt.Horizontal)
-                widget.setMinimum((param['min']) * self.div)
-                widget.setMaximum((param['max']) * self.div)
+                widget.setMinimum(0.0)
+                widget.setMaximum(self.div)
                 self.use_div[param['name']] = True
                 self.connections[param['name']] = partial(self.value_changed,
-                                                          param['name'],
-                                                          use_div=True)
+                                                          param['name'])
                 widget.valueChanged.connect(self.connections[param['name']])
                 layout.addWidget(widget)
 
@@ -330,7 +334,15 @@ class DrSingle(Plugin):
                         rospy.logwarn(param_name + " disconnect failed " + str(e))
                         # TODO(lucasw) if that failed will the connect work?
                     if self.use_div[param_name]:
-                        value = value * self.div
+                        min_val = self.params[param_name]['min']
+                        max_val = self.params[param_name]['max']
+                        if min_val != max_val:
+                            old_val = value
+                            value = (self.div * (value - min_val) / (max_val - min_val))
+                            # if self.use_div[param_name]:
+                            #     print 'update config', param_name, old_val, value, min_val, max_val
+                        else:
+                            value = self.div
                     self.widget[param_name].setValue(value)
                     self.widget[param_name].valueChanged.connect(self.connections[param_name])
                 elif type(self.widget[param_name]) is type(QLineEdit()):
@@ -361,9 +373,13 @@ class DrSingle(Plugin):
         # TODO(lucasw) wanted to avoid these with a timered loop, but doing it direct for now
         # self.do_update_dr.emit()
 
-    def value_changed(self, name, value, use_div=False):
-        if use_div:
-            value /= self.div
+    def value_changed(self, name, value, min_val=None, max_val=None):
+        if self.use_div[name]:
+            min_val = self.params[name]['min']
+            max_val = self.params[name]['max']
+            old_val = value
+            value = min_val + (max_val - min_val) * value / self.div
+            # print 'val changed', name, old_val, value, min_val, max_val, self.div
         self.changed_value[name] = value
         # TODO(lucasw) wanted to avoid these with a timered loop, but doing it direct for now
         # self.do_update_dr.emit()
