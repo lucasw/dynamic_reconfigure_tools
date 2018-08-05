@@ -323,7 +323,8 @@ class DrSingle(Plugin):
         for param_name in config.keys():
             if param_name in self.widget.keys():
                 if param_name in self.val_label.keys():
-                    self.val_label[param_name].setText(str(config[param_name]))
+                    text = "{:06f}".format(config[param_name])
+                    self.val_label[param_name].setText(text)
                 # TODO(lucasw) also need to change slider
                 value = config[param_name]
                 if type(self.widget[param_name]) is type(QSlider()):
