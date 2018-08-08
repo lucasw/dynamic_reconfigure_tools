@@ -322,8 +322,23 @@ class DrSingle(Plugin):
         rospy.logdebug(config)
         for param_name in config.keys():
             if param_name in self.widget.keys():
-                if param_name in self.val_label.keys():
-                    text = "{:06f}".format(config[param_name])
+                if param_name in self.val_label.keys() and param_name in self.params.keys():
+                    if self.params[param_name]['type'] == 'int':
+                        text = str(config[param_name])
+                    else:
+                        val = config[param_name]
+                        max_dec = 11
+                        # text = str(val)
+                        num_before_decimal = len(str(int(val)))
+                        num_after_decimal = max(max_dec - num_before_decimal - 1, 1)
+                        text = "{:0.{prec}f}".format(config[param_name], prec=num_after_decimal)
+                        if True:
+                            text = text.rstrip("0")
+                            if text[-1] == '.':
+                                text += "0"
+                        if len(text) > max_dec:
+                            text = "{:g}".format(config[param_name])
+                        print param_name, num_before_decimal, num_after_decimal, val, text, len(text)
                     self.val_label[param_name].setText(text)
                 # TODO(lucasw) also need to change slider
                 value = config[param_name]
