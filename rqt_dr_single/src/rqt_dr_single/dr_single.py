@@ -338,7 +338,7 @@ class DrSingle(Plugin):
                                 text += "0"
                         if len(text) > max_dec:
                             text = "{:g}".format(config[param_name])
-                        print param_name, num_before_decimal, num_after_decimal, val, text, len(text)
+                        # print param_name, num_before_decimal, num_after_decimal, val, text, len(text)
                     self.val_label[param_name].setText(text)
                 # TODO(lucasw) also need to change slider
                 value = config[param_name]
@@ -433,7 +433,7 @@ class DrSingle(Plugin):
             self.changed_value = {}
 
     def shutdown_plugin(self):
-        self.reset()
+        # self.reset()
         # TODO unregister all publishers here
         self.timer.stop()
 
