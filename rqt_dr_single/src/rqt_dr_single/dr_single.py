@@ -339,7 +339,11 @@ class DrSingle(Plugin):
                         if len(text) > max_dec:
                             text = "{:g}".format(config[param_name])
                         # print param_name, num_before_decimal, num_after_decimal, val, text, len(text)
-                    self.val_label[param_name].setText(text)
+                    try:
+                        self.val_label[param_name].setText(text)
+                    except RuntimeError as ex:
+                        rospy.logerr(ex)
+                        continue
                 # TODO(lucasw) also need to change slider
                 value = config[param_name]
                 if type(self.widget[param_name]) is type(QSlider()):
