@@ -2,6 +2,7 @@
 import os
 import rospkg
 import rospy
+import threading
 import time
 
 from dynamic_reconfigure.client import Client
@@ -66,6 +67,9 @@ class DrSingle(Plugin):
         # self.parent_layout = self._widget.findChild(QVBoxLayout, 'vertical_layout')
         self.layout = self._widget.findChild(QGridLayout, 'grid_layout')
         self.changed_value = {}
+
+        self.lock = threading.Lock()
+
         self.reset()
         self.do_update_description.connect(self.update_description)
         self.do_update_config.connect(self.update_config)
@@ -152,6 +156,7 @@ class DrSingle(Plugin):
         self.do_update_description.emit(description)
 
     def reset(self):
+        self.lock.acquire()
         rospy.logdebug("reset")
         self.described = False
         self.widget = {}
@@ -162,6 +167,7 @@ class DrSingle(Plugin):
         self.params = {}
         self.val_label = {}
         self.config = None
+        self.lock.release()
 
     def add_label(self, name, row):
         # TODO(lucasw) don't really need this
@@ -193,6 +199,7 @@ class DrSingle(Plugin):
     def update_description(self, description):
         if rospy.is_shutdown():
             return
+        self.lock.acquire()
         # clear the layout
         # rospy.loginfo("clearing layout " + str(self.layout.count()))
         for i in reversed(range(self.layout.count())):
@@ -302,6 +309,7 @@ class DrSingle(Plugin):
                 # self.layout.addWidget(val_label, row, 2)
                 row += 1
         self.described = True
+        self.lock.release()
         rospy.loginfo("updated description")
         if self.config:
             self.update_config(self.config)
@@ -320,8 +328,11 @@ class DrSingle(Plugin):
         # if not self.client:
         #     return
         rospy.logdebug(config)
+        self.lock.acquire()
         for param_name in config.keys():
-            if param_name in self.widget.keys():
+            if not param_name in self.widget.keys():
+                continue
+            try:
                 if param_name in self.val_label.keys() and param_name in self.params.keys():
                     if self.params[param_name]['type'] == 'int':
                         text = str(config[param_name])
@@ -339,11 +350,7 @@ class DrSingle(Plugin):
                         if len(text) > max_dec:
                             text = "{:g}".format(config[param_name])
                         # print param_name, num_before_decimal, num_after_decimal, val, text, len(text)
-                    try:
                         self.val_label[param_name].setText(text)
-                    except RuntimeError as ex:
-                        rospy.logerr(ex)
-                        continue
                 # TODO(lucasw) also need to change slider
                 value = config[param_name]
                 if type(self.widget[param_name]) is type(QSlider()):
@@ -371,6 +378,10 @@ class DrSingle(Plugin):
                     self.widget[param_name].setChecked(value)
                 elif type(self.widget[param_name]) is type(QComboBox()):
                     self.widget[param_name].setCurrentIndex(self.enum_inds[param_name][value])
+            except RuntimeError as ex:
+                rospy.logerr(ex)
+                continue
+        self.lock.release()
 
     def text_resend(self, name):
         self.changed_value[name] = self.widget[name].text()
