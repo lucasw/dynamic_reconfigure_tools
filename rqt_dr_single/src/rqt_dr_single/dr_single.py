@@ -202,14 +202,19 @@ class DrSingle(Plugin):
         self.lock.acquire()
         # clear the layout
         # rospy.loginfo("clearing layout " + str(self.layout.count()))
-        for i in reversed(range(self.layout.count())):
-            layout = self.layout.itemAt(i).layout()
-            if layout:
-                for j in reversed(range(layout.count())):
-                    layout.itemAt(j).widget().setParent(None)
-                self.layout.itemAt(i).layout().setParent(None)
-            elif self.layout.itemAt(i).widget():
-                self.layout.itemAt(i).widget().setParent(None)
+        try:
+            for i in reversed(range(self.layout.count())):
+                layout = self.layout.itemAt(i).layout()
+                if layout:
+                    for j in reversed(range(layout.count())):
+                        layout.itemAt(j).widget().setParent(None)
+                    self.layout.itemAt(i).layout().setParent(None)
+                elif self.layout.itemAt(i).widget():
+                    self.layout.itemAt(i).widget().setParent(None)
+        except RuntimeError as ex:
+            rospy.logerr(ex)
+            self.lock.release()
+            return
         # TODO(lucasw) this has the min and max values and types from which to 
         # generate the gui
         # rospy.loginfo(description)
@@ -438,8 +443,20 @@ class DrSingle(Plugin):
         if self.client is None:
             return
         if len(self.changed_value.keys()) > 0:
+            update_timeout = 2.0
             try:
-                self.client.update_configuration(self.changed_value)
+                th1 = threading.Thread(target=self.client.update_configuration,
+                                      args=[self.changed_value])
+                th1.start()
+                t1 = rospy.Time.now()
+                while ((rospy.Time.now() - t1).to_sec() < update_timeout):
+                    if th1.isAlive():
+                        rospy.sleep(0.01)
+                    else:
+                        break
+                if th1.isAlive():
+                    # TODO(lucasw) how to kill t1- or does it matter?
+                    raise RuntimeError("timeout")
             except:
                 rospy.logerr("lost connection to server " + str(self.server_name))
                 self.client = None

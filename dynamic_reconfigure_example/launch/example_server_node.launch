@@ -1,13 +1,22 @@
 <?xml version="1.0"?>
 <launch>
+  <arg name="hangup" default="false" doc="test the client by making the server sleep" />
+  <arg name="die" default="false" doc="test the client by making the server die" />
 
   <node name="example_server_node" pkg="dynamic_reconfigure_example" type="example_server_node"
       output="screen" >
   </node>
 
+  <node name="example_server_node2" pkg="dynamic_reconfigure_example" type="example_server.py"
+      output="screen" >
+    <param name="hangup" value="$(arg hangup)" />
+    <param name="die" value="$(arg die)" />
+  </node>
+
+
   <node name="rqt_dr_single" pkg="rqt_dr_single" type="rqt_dr_single"
       output="screen" >
-    <param name="server" value="example_server_node" />
+    <param name="server" value="example_server_node2" />
   </node>
 
 </launch>
