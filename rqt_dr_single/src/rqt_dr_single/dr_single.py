@@ -155,7 +155,7 @@ class DrSingle(Plugin):
         # self.description = description
         self.do_update_description.emit(description)
 
-    def reset(self):
+    def reset(self, use_lock=True):
         self.lock.acquire()
         rospy.logdebug("reset")
         self.described = False
@@ -384,8 +384,10 @@ class DrSingle(Plugin):
                 elif type(self.widget[param_name]) is type(QComboBox()):
                     self.widget[param_name].setCurrentIndex(self.enum_inds[param_name][value])
             except RuntimeError as ex:
-                rospy.logerr(ex)
-                continue
+                pass
+                # rospy.logerr(param_name + str(ex))
+                # self.reset(use_lock=False)
+                # break
         self.lock.release()
 
     def text_resend(self, name):
