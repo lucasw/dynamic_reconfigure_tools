@@ -446,6 +446,8 @@ class DrSingle(Plugin):
             return
         if len(self.changed_value.keys()) > 0:
             update_timeout = 2.0
+            # TODO(lucasw) could follow https://stackoverflow.com/questions/2829329/catch-a-threads-exception-in-the-caller-thread-in-python
+            # and pass a message back if the update configuration fails
             try:
                 th1 = threading.Thread(target=self.client.update_configuration,
                                       args=[self.changed_value])

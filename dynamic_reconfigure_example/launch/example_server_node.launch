@@ -13,6 +13,9 @@
     <param name="die" value="$(arg die)" />
   </node>
 
+  <node name="example_server_manual_py" pkg="dynamic_reconfigure_example" type="manual_server.py"
+      output="screen" >
+  </node>
 
   <node name="rqt_dr_single" pkg="rqt_dr_single" type="rqt_dr_single"
       output="screen" >

@@ -11,6 +11,7 @@ hangup = False
 die = False
 
 def callback(config, level):
+    rospy.loginfo(config)
     global count
     global hangup
     global die
