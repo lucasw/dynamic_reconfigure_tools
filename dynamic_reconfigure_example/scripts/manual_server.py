@@ -26,8 +26,25 @@ class ManualDr:
             bool_param.value = False
             self.cd.min.bools.append(bool_param)
 
+
+        group_names = ['Default', 'Test']
+
+        group_state = GroupState()
+        group_state.name = group_names[0]
+        group_state.state = True
+        group_state.parent = 0
+        group_state.id = 0
+        self.cd.dflt.groups.append(group_state)
+
+        group_state = GroupState()
+        group_state.name = group_names[1]
+        group_state.state = True
+        group_state.parent = 0
+        group_state.id = 1
+        self.cd.dflt.groups.append(group_state)
+
         group = Group()
-        group.name = 'Default'
+        group.name = group_names[0]
         group.parent = 0
         group.id = 0
         param = ParamDescription()
@@ -39,7 +56,7 @@ class ManualDr:
         self.cd.groups.append(group)
 
         group = Group()
-        group.name = 'Test'
+        group.name = group_names[1]
         group.parent = 0
         group.id = 1
         param = ParamDescription()
@@ -67,7 +84,7 @@ class ManualDr:
         # TODO(lucasw)
         # this will get all the updates to every subscriber that has been listening
         # since the beginning, but need all the parameters for new subscribers
-        self.update_pub.publish(req.config)
+        self.update_pub.publish(self.cd.dflt)
         # self.pub.publish(self.cd)
 
         resp = ReconfigureResponse()
