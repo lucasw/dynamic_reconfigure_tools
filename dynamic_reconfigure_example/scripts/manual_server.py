@@ -31,7 +31,7 @@ class ManualDr:
         group.parent = 0
         group.id = 0
         param = ParamDescription()
-        param.name = bool_param.name
+        param.name = 'test_bool'
         param.level = 1
         param.type = 'bool'
         param.description = 'test bool'
@@ -43,7 +43,7 @@ class ManualDr:
         group.parent = 0
         group.id = 1
         param = ParamDescription()
-        param.name = bool_param.name
+        param.name = 'test_bool2'
         param.level = 1
         param.type = 'bool'
         param.description = 'test bool2'
@@ -53,14 +53,27 @@ class ManualDr:
         self.pub.publish(self.cd)
 
         self.sub = rospy.Subscriber(ns + '/parameter_updates', Config, self.update, queue_size=1)
+        self.update_pub = rospy.Publisher(ns + '/parameter_updates', Config, queue_size=1)
         self.srv = rospy.Service(ns + '/set_parameters', Reconfigure, self.handle_reconfigure)
 
     def handle_reconfigure(self, req):
         rospy.loginfo(req)
+
+        for b_param in req.config.bools:
+            for i in range(len(self.cd.dflt.bools)):
+                if b_param.name == self.cd.dflt.bools[i].name:
+                    self.cd.dflt.bools[i].value = b_param.value
+                    print("new value " + b_param.name + " " + str(self.cd.dflt.bools[i].value))
+        # TODO(lucasw)
+        # this will get all the updates to every subscriber that has been listening
+        # since the beginning, but need all the parameters for new subscribers
+        self.update_pub.publish(req.config)
+        # self.pub.publish(self.cd)
+
         resp = ReconfigureResponse()
         return resp
 
-    def update(msg):
+    def update(self, msg):
         rospy.loginfo(msg)
 
 if __name__ == "__main__":
