@@ -375,14 +375,20 @@ class DrSingle(Plugin):
                             #     print 'update config', param_name, old_val, value, min_val, max_val
                         else:
                             value = self.div
-                    self.widget[param_name].setValue(value)
-                    self.widget[param_name].valueChanged.connect(self.connections[param_name])
+                    try:
+                        self.widget[param_name].setValue(value)
+                        self.widget[param_name].valueChanged.connect(self.connections[param_name])
+                    except TypeError as ex:
+                        rospy.logerr("{} {} {}".format(param_name, value, ex))
                 elif type(self.widget[param_name]) is type(QLineEdit()):
                     self.widget[param_name].setText(value)
                 elif type(self.widget[param_name]) is type(QCheckBox()):
                     self.widget[param_name].setChecked(value)
                 elif type(self.widget[param_name]) is type(QComboBox()):
-                    self.widget[param_name].setCurrentIndex(self.enum_inds[param_name][value])
+                    try:
+                        self.widget[param_name].setCurrentIndex(self.enum_inds[param_name][value])
+                    except KeyError as ex:
+                        rospy.logerr("{} {} {}".format(param_name, value, ex))
             except RuntimeError as ex:
                 pass
                 # rospy.logerr(param_name + str(ex))
