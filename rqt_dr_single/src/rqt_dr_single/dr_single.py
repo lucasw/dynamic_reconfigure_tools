@@ -132,6 +132,7 @@ class DrSingle(Plugin):
                 # default to choosing the first one
                 # if self.server_name is None:
                 #     self.server_name = server_name
+        dr_list.sort()
         self.server_combobox.addItems(dr_list)
         self.server_combobox.currentIndexChanged.connect(self.server_changed)
 
