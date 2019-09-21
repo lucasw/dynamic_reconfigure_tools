@@ -197,6 +197,8 @@ class DrSingle(Plugin):
         return val_edit
 
     # Setup the gui according to the dr description
+    # TODO(lucasw) but it doesn't have all the information, can get that out of
+    # the config callback and this combined?
     def update_description(self, description):
         if rospy.is_shutdown():
             return
@@ -218,6 +220,7 @@ class DrSingle(Plugin):
             return
         # TODO(lucasw) this has the min and max values and types from which to
         # generate the gui
+        # But no group information
         # rospy.loginfo(description)
         row = 0
         for param in description:
