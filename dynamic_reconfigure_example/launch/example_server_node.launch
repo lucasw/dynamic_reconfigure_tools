@@ -2,6 +2,7 @@
 <launch>
   <arg name="hangup" default="false" doc="test the client by making the server sleep" />
   <arg name="die" default="false" doc="test the client by making the server die" />
+  <arg name="use_rqt" default="true" />
 
   <node name="example_server_node" pkg="dynamic_reconfigure_example" type="example_server_node"
       output="screen" >
@@ -18,7 +19,8 @@
   </node>
 
   <node name="rqt_dr_single" pkg="rqt_dr_single" type="rqt_dr_single"
-      output="screen" >
+      output="screen"
+      if="$(arg use_rqt)" >
     <param name="server" value="example_server_node2" />
   </node>
 

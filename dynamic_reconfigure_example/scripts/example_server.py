@@ -11,11 +11,11 @@ hangup = False
 die = False
 
 def callback(config, level):
-    rospy.loginfo(config)
+    rospy.logdebug(config)
     global count
     global hangup
     global die
-    rospy.loginfo("""Reconfigure Request: {int_param}, {double_param},\ 
+    rospy.logdebug("""Reconfigure Request: {int_param}, {double_param},\
           {big_double}, {str_param}, {bool_param}, {enum_param}""".format(**config))
 
     if hangup:
