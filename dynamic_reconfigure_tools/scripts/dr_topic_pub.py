@@ -38,7 +38,6 @@ class DrTopics():
     def make_pub(self):
         self.msg_class = roslib.message.get_message_class(self.msg_name)
 
-
     def dont_use(self):
         self.msg_class = roslib.message.get_message_class(self.msg_name)
         all_fields = dir(self.msg_class)
@@ -140,6 +139,7 @@ class DrTopics():
         delta = {}
         delta[param] = msg.data
         self.dr_server.update_configuration(delta)
+
 
 if __name__ == "__main__":
     rospy.init_node("dr_topics")

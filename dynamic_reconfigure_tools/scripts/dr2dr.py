@@ -32,7 +32,7 @@ class Dr2Dr():
         wait_for_config = rospy.get_param("~wait_for_config", False)
         if wait_for_config:
             self.configured_sub = rospy.Subscriber("configured", Empty,
-                                               self.config, queue_size=1)
+                                                   self.config, queue_size=1)
         else:
             self.config(None)
 
@@ -45,7 +45,7 @@ class Dr2Dr():
 
         # print dir(base_cfg)
         base_cfg.all_level = 1
-        #rospy.loginfo(rospy.get_namespace())
+        # rospy.loginfo(rospy.get_namespace())
         all_params = rospy.get_param_names()
         prefix = rospy.get_namespace() + "controls/"
         rospy.logdebug(rospy.get_namespace())
@@ -56,9 +56,9 @@ class Dr2Dr():
                 param = param.replace(prefix, "")
                 rospy.logdebug(param)
                 # rospy.loginfo(config)
-                #self.server[param] = config[0]
+                # self.server[param] = config[0]
                 server_name = config[0]
-                if not server_name in self.server_params.keys():
+                if server_name not in self.server_params.keys():
                     self.server_params[server_name] = []
                 self.server_params[server_name].append(param)
                 rospy.loginfo("new param: " + server_name + " " + param + " " +
@@ -130,7 +130,7 @@ class Dr2Dr():
                         rospy.loginfo(str(level) + " " + key + ": " + str(value))
                         rospy.logwarn(e)
                     self.break_feedback2 = False
-                # TODO(lucasw) else try creating the client again- or 
+                # TODO(lucasw) else try creating the client again- or
                 # have timered update that tries that at regular rate?
         return config
 
@@ -151,6 +151,7 @@ class Dr2Dr():
         self.dr_server.update_configuration(updates)
         self.break_feedback = False
         # http://wiki.ros.org/dynamic_reconfigure/Tutorials/UsingTheDynamicReconfigurePythonClient
+
 
 if __name__ == "__main__":
     rospy.init_node("dr2dr")

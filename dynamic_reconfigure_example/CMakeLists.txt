@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 roslint_cpp()
+roslint_python()
 
 generate_dynamic_reconfigure_options(
   cfg/Example.cfg

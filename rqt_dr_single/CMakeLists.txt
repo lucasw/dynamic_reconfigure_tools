@@ -6,10 +6,12 @@ project(rqt_dr_single)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
+  roslint
   rospy
   rqt_gui_py
 )
 
+roslint_python()
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 

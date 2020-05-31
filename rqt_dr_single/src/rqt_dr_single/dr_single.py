@@ -11,7 +11,8 @@ from qt_gui.plugin import Plugin
 from python_qt_binding import loadUi
 # TODO(lucasw) need a library version detection to switch between these?
 # ImportError: cannot import name QCheckBox
-# from python_qt_binding.QtGui import QCheckBox, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QSlider, QWidget
+# from python_qt_binding.QtGui import QCheckBox, QGridLayout, QHBoxLayout,
+# QLabel, QLineEdit, QVBoxLayout, QSlider, QWidget
 # this works in qt5 kinetic
 from python_qt_binding.QtCore import QTimer, Signal
 from python_qt_binding.QtGui import QDoubleValidator, QIntValidator
@@ -20,6 +21,7 @@ from python_qt_binding.QtWidgets import QHBoxLayout, QLabel, QLineEdit, QPushBut
 
 from python_qt_binding import QtCore
 from std_msgs.msg import Int32
+
 
 class DrSingle(Plugin):
     do_update_description = QtCore.pyqtSignal(list)
@@ -37,12 +39,12 @@ class DrSingle(Plugin):
         parser = ArgumentParser()
         # Add argument(s) to the parser.
         parser.add_argument("-q", "--quiet", action="store_true",
-                      dest="quiet",
-                      help="Put plugin in silent mode")
+                            dest="quiet",
+                            help="Put plugin in silent mode")
         args, unknowns = parser.parse_known_args(context.argv())
         if not args.quiet:
-            print 'arguments: ', args
-            print 'unknowns: ', unknowns
+            print('arguments: {}'.format(args))
+            print('unknowns: {}'.format(unknowns))
 
         self.rospack = rospkg.RosPack()
 
@@ -285,7 +287,7 @@ class DrSingle(Plugin):
                     layout.addWidget(widget)
                     line_edit = self.make_line_edit(param['name'], row,
                                                     param['min'], param['max'],
-                                                   double_not_int=False)
+                                                    double_not_int=False)
                     layout.addWidget(line_edit)
                     self.layout.addLayout(layout, row, 1)
                 else:  # enum
@@ -339,7 +341,7 @@ class DrSingle(Plugin):
         rospy.logdebug(config)
         self.lock.acquire()
         for param_name in config.keys():
-            if not param_name in self.widget.keys():
+            if param_name not in self.widget.keys():
                 continue
             try:
                 if param_name in self.val_label.keys() and param_name in self.params.keys():
@@ -362,7 +364,7 @@ class DrSingle(Plugin):
                     self.val_label[param_name].setText(text)
                 # TODO(lucasw) also need to change slider
                 value = config[param_name]
-                if type(self.widget[param_name]) is type(QSlider()):
+                if isinstance(self.widget[param_name], QSlider):
                     try:
                         self.widget[param_name].valueChanged.disconnect()
                     except TypeError as e:
@@ -384,11 +386,11 @@ class DrSingle(Plugin):
                         self.widget[param_name].valueChanged.connect(self.connections[param_name])
                     except TypeError as ex:
                         rospy.logerr("{} {} {}".format(param_name, value, ex))
-                elif type(self.widget[param_name]) is type(QLineEdit()):
+                elif isinstance(self.widget[param_name], QLineEdit):
                     self.widget[param_name].setText(value)
-                elif type(self.widget[param_name]) is type(QCheckBox()):
+                elif isinstance(self.widget[param_name], QCheckBox):
                     self.widget[param_name].setChecked(value)
-                elif type(self.widget[param_name]) is type(QComboBox()):
+                elif isinstance(self.widget[param_name], QComboBox):
                     try:
                         self.widget[param_name].setCurrentIndex(self.enum_inds[param_name][value])
                     except KeyError as ex:
@@ -406,7 +408,7 @@ class DrSingle(Plugin):
         # self.do_update_dr.emit()
 
     def enum_changed(self, name, ind):
-        if not ind in self.enum_values[name].keys():
+        if ind not in self.enum_values[name].keys():
             return
         #     rospy.logerr(name + " values ind mismatch " + str(ind) + " " +
         #                  str(self.enum_values[name].keys()))
@@ -448,7 +450,7 @@ class DrSingle(Plugin):
                                  config_callback=self.config_callback,
                                  description_callback=self.description_callback)
             self.do_update_checkbox.emit(True)
-        except:  # ROSException:
+        except Exception as ex:  # ROSException:
             rospy.logdebug("no server " + str(self.server_name))
 
     def update_dr_configuration(self, evt):
@@ -456,11 +458,12 @@ class DrSingle(Plugin):
             return
         if len(self.changed_value.keys()) > 0:
             update_timeout = 2.0
-            # TODO(lucasw) could follow https://stackoverflow.com/questions/2829329/catch-a-threads-exception-in-the-caller-thread-in-python
+            # TODO(lucasw) could follow
+            # https://stackoverflow.com/questions/2829329/catch-a-threads-exception-in-the-caller-thread-in-python
             # and pass a message back if the update configuration fails
             try:
                 th1 = threading.Thread(target=self.client.update_configuration,
-                                      args=[self.changed_value])
+                                       args=[self.changed_value])
                 th1.start()
                 t1 = rospy.Time.now()
                 while ((rospy.Time.now() - t1).to_sec() < update_timeout):
@@ -471,7 +474,7 @@ class DrSingle(Plugin):
                 if th1.isAlive():
                     # TODO(lucasw) how to kill t1- or does it matter?
                     raise RuntimeError("timeout")
-            except:
+            except Exception as ex:
                 rospy.logerr("lost connection to server " + str(self.server_name))
                 self.client = None
                 self.do_update_checkbox.emit(False)
@@ -507,7 +510,7 @@ class DrSingle(Plugin):
         if self.hide_dropdown:
             self.server_combobox.hide()
 
-    #def trigger_configuration(self):
+    # def trigger_configuration(self):
         # Comment in to signal that the plugin has a way to configure
         # This will enable a setting button (gear icon) in each dock widget title bar
         # Usually used to open a modal configuration dialog

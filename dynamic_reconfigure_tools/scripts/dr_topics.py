@@ -34,7 +34,7 @@ class DrTopics():
 
         # print dir(base_cfg)
         base_cfg.all_level = 1
-        #rospy.loginfo(rospy.get_namespace())
+        # rospy.loginfo(rospy.get_namespace())
         # TODO(lucasw) maybe this should be a pickled string instead
         # of a bunch of params?
         all_params = rospy.get_param_names()
@@ -122,6 +122,7 @@ class DrTopics():
         if self.delta:
             self.dr_server.update_configuration(self.delta)
             self.delta = None
+
 
 if __name__ == "__main__":
     rospy.init_node("dr_topics")
