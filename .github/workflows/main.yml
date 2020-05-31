@@ -74,4 +74,4 @@ jobs:
       - name: lint
         run: |
           cd ~/catkin_ws
-          catkin build rviz_ortho_view_controller --no-deps --catkin-make-args roslint
+          catkin build $(catkin list --depends-on roslint -u) --no-deps --catkin-make-args roslint
