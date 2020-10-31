@@ -304,7 +304,7 @@ class DrSingle(Plugin):
                         self.enum_values[param['name']][count] = enum['value']
                         self.enum_inds[param['name']][enum['value']] = count
                         count += 1
-                        # print count, enum
+                        # print(count, enum)
                     self.connections[param['name']] = partial(self.enum_changed,
                                                               param['name'])
                     widget.currentIndexChanged.connect(self.connections[param['name']])
@@ -360,7 +360,7 @@ class DrSingle(Plugin):
                                 text += "0"
                         if len(text) > max_dec:
                             text = "{:g}".format(config[param_name])
-                        # print param_name, num_before_decimal, num_after_decimal, val, text, len(text)
+                        # print(param_name, num_before_decimal, num_after_decimal, val, text, len(text))
                     self.val_label[param_name].setText(text)
                 # TODO(lucasw) also need to change slider
                 value = config[param_name]
@@ -378,7 +378,7 @@ class DrSingle(Plugin):
                             old_val = value
                             value = (self.div * (value - min_val) / (max_val - min_val))
                             # if self.use_div[param_name]:
-                            #     print 'update config', param_name, old_val, value, min_val, max_val
+                            #     print('update config', param_name, old_val, value, min_val, max_val)
                         else:
                             value = self.div
                     try:
@@ -429,7 +429,7 @@ class DrSingle(Plugin):
             max_val = self.params[name]['max']
             old_val = value
             value = min_val + (max_val - min_val) * value / self.div
-            # print 'val changed', name, old_val, value, min_val, max_val, self.div
+            # print('val changed', name, old_val, value, min_val, max_val, self.div)
         self.changed_value[name] = value
         # TODO(lucasw) wanted to avoid these with a timered loop, but doing it direct for now
         # self.do_update_dr.emit()

@@ -32,7 +32,7 @@ class DrTopics():
         self.values = {}
         self.parameters = {}
 
-        # print dir(base_cfg)
+        # print(dir(base_cfg))
         base_cfg.all_level = 1
         # rospy.loginfo(rospy.get_namespace())
         # TODO(lucasw) maybe this should be a pickled string instead
@@ -54,7 +54,7 @@ class DrTopics():
                     base_cfg.min[param] = rospy.get_param(prefix + param + "/min")
                     base_cfg.max[param] = rospy.get_param(prefix + param + "/max")
                     # TODO(lucasw) set the default somewhere
-                    print name, ':', prefix + param + "/default"
+                    print(name, ':', prefix + param + "/default")
                     default = rospy.get_param(prefix + param + "/default", base_cfg.min[param])
                     base_cfg.defaults[param] = default
                     self.values[param] = base_cfg.defaults[param]

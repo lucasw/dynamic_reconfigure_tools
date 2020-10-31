@@ -49,10 +49,10 @@ class DrTopics():
         for field in all_fields:
             if field not in generic_fields:
                 fields.append(field)
-        print fields
+        print(fields)
         # TODO look in rqt message publisher
         for field in fields:
-            print field, ": ", dir(getattr(self.msg_class(), field))
+            print(field, ": ", dir(getattr(self.msg_class(), field)))
         if self.pub:
             self.pub.unregister()
         self.pub = rospy.Publisher("output", self.msg_class, queue_size=5)

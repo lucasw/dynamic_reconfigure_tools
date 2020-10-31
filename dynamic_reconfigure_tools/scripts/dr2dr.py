@@ -43,7 +43,7 @@ class Dr2Dr():
         self.server_params = {}
         self.server_value_name = {}
 
-        # print dir(base_cfg)
+        # print(dir(base_cfg))
         base_cfg.all_level = 1
         # rospy.loginfo(rospy.get_namespace())
         all_params = rospy.get_param_names()
@@ -112,7 +112,7 @@ class Dr2Dr():
 
     # the callback from this server update the other servers through the clients
     def dr_callback(self, config, level):
-        # print level, config, self.configured, self.break_feedback
+        # print(level, config, self.configured, self.break_feedback)
         if not self.configured:
             return config
         if self.break_feedback:
