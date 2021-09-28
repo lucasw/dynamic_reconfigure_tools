@@ -1,0 +1,53 @@
+#!/usr/bin/env python
+# Lucas Walter
+# March 2018
+# Create a ddynamic reconfigure server from a provided topic type
+
+import roslib.message
+import rospy
+from ddynamic_reconfigure_python.ddynamic_reconfigure import DDynamicReconfigure
+
+
+class DDRTopics():
+    def __init__(self):
+        self.config = None
+
+        self.msg_name = rospy.get_param("~msg_type", "std_msgs/Float64")
+        self.msg_class = roslib.message.get_message_class(self.msg_name)
+
+        # TODO(lucasw) no per-topic min maxes, just these for all of them
+        min_value = rospy.get_param("~min", -1.0)
+        max_value = rospy.get_param("~max", 1.0)
+        max_len = rospy.get_param("~max_len", 30)
+
+        self.ddr = DDynamicReconfigure("")
+
+        self.pubs = {}
+        topics = rospy.get_param("~topics", ["out"])
+        for topic in topics:
+            name = topic.replace("/", "_").lstrip("_")[-max_len:]
+            rospy.loginfo("{} -> {}".format(topic, name))
+            self.pubs[name] = rospy.Publisher(topic, self.msg_class, queue_size=3)
+            # TODO(lucasw) this isn't ideal but need to pair down the names
+            self.ddr.add_variable(name, topic, 0.0, min_value, max_value)
+
+        self.ddr.start(self.dr_callback)
+
+    def dr_callback(self, config, level):
+        if self.config is not None:
+            for topic in self.pubs.keys():
+                old_value = getattr(self.config, topic)
+                new_value = getattr(config, topic)
+                if new_value != old_value:
+                    # rospy.loginfo("{} {}".format(topic, new_value))
+                    # TODO(lucasw) this will only work for a few simple message types
+                    self.pubs[topic].publish(self.msg_class(new_value))
+
+        self.config = config
+        return config
+
+
+if __name__ == "__main__":
+    rospy.init_node("ddr_topics")
+    ddr_topics = DDRTopics()
+    rospy.spin()

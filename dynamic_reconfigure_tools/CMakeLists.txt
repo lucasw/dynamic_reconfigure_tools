@@ -124,6 +124,7 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 install(PROGRAMS
+  scripts/ddr_topic_pub.py
   scripts/dr_topics.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
