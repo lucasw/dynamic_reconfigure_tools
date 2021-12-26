@@ -2,7 +2,7 @@
 <package>
   <name>rqt_dr_single</name>
   <version>0.0.0</version>
-  <description>The rqt_dr_single package provides an rqt front end to a single dynamic reconfigure server, and will handle the server going down then returning gracefully.</description>
+  <description>Provides an rqt front end to a single dynamic reconfigure server, and will handle the server going down then returning gracefully.</description>
 
   <maintainer email="wsacul@gmail.com">Lucas Walter</maintainer>
 
@@ -39,9 +39,12 @@
   <build_depend>dynamic_reconfigure</build_depend>
   <build_depend>roslint</build_depend>
   <build_depend>rospy</build_depend>
+  <build_depend>rqt_gui</build_depend>
   <build_depend>rqt_gui_py</build_depend>
   <run_depend>dynamic_reconfigure</run_depend>
+  <run_depend>dynamic_reconfigure_example</run_depend>
   <run_depend>rospy</run_depend>
+  <run_depend>rqt_gui</run_depend>
   <run_depend>rqt_gui_py</run_depend>
 
 

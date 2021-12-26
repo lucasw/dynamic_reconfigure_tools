@@ -2,11 +2,11 @@
 <package>
   <name>dynamic_reconfigure_tools</name>
   <version>0.0.1</version>
-  <description>The dynamic_reconfigure_tools package</description>
+  <description>topic and rqt tools dynamic reconfigure</description>
 
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="lucasw_backwards@gmail.com">Lucas Walter</maintainer>
+  <maintainer email="wsacul@gmail.com">Lucas Walter</maintainer>
 
   <!-- One license tag required, multiple allowed, one license per tag -->
   <!-- Commonly used license strings: -->

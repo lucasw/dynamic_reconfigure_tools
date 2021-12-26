@@ -125,6 +125,8 @@ include_directories(
 ## in contrast to setup.py, you can choose the destination
 install(PROGRAMS
   scripts/ddr_topic_pub.py
+  scripts/dr2dr.py
+  scripts/dr_topic_pub.py
   scripts/dr_topics.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

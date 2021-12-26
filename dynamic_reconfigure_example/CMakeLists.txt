@@ -19,8 +19,12 @@ generate_dynamic_reconfigure_options(
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES dynamic_reconfigure_example
-  CATKIN_DEPENDS nodelet roscpp std_msgs
+  LIBRARIES ${PROJECT_NAME}
+  CATKIN_DEPENDS
+  dynamic_reconfigure
+  nodelet
+  roscpp
+  std_msgs
 )
 
 include_directories(
@@ -28,15 +32,15 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_library(dynamic_reconfigure_example
+add_library(${PROJECT_NAME}
   src/example_server.cpp
 )
-add_dependencies(dynamic_reconfigure_example ${PROJECT_NAME}_gencfg)
-target_link_libraries(dynamic_reconfigure_example ${catkin_LIBRARIES})
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencfg)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 # TODO(lucasw) is this needed?
 if(catkin_EXPORTED_LIBRARIES)
-  add_dependencies(dynamic_reconfigure_example ${catkin_EXPORTED_LIBRARIES})
+  add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_LIBRARIES})
 endif()
 
 add_executable(example_server_node_wrapper src/example_server_node_wrapper.cpp)
@@ -47,7 +51,14 @@ add_dependencies(example_server_node ${PROJECT_NAME}_gencfg)
 target_link_libraries(example_server_node ${catkin_LIBRARIES})
 
 # install
+
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+)
+
 install(TARGETS
+  ${PROJECT_NAME}
   example_server_node
   example_server_node_wrapper
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
@@ -55,8 +66,15 @@ install(TARGETS
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
+catkin_install_python(PROGRAMS
+  scripts/example_client.py
+  scripts/example_server.py
+  scripts/manual_server.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
 install(FILES
-  nodelet_dynamic_reconfigure_example.xml
+  nodelet_${PROJECT_NAME}.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
