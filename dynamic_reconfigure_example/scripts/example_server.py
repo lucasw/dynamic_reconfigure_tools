@@ -10,6 +10,7 @@ count = 0
 hangup = False
 die = False
 
+
 def callback(config, level):
     rospy.logdebug(config)
     global count
@@ -31,8 +32,9 @@ def callback(config, level):
             sys.exit(1)
     return config
 
+
 if __name__ == "__main__":
-    rospy.init_node("rqt_dr_single", anonymous = True)
+    rospy.init_node("rqt_dr_single", anonymous=True)
 
     hangup = rospy.get_param("~hangup", False)
     die = rospy.get_param("~die", False)

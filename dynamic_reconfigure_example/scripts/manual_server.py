@@ -1,18 +1,23 @@
 #!/usr/bin/env python
 
 import rospy
-import sys
 
-from dynamic_reconfigure.srv import *
-from dynamic_reconfigure.msg import *
-# from dynamic_reconfigure_example.cfg import ExampleConfig
+from dynamic_reconfigure.msg import BoolParameter
+from dynamic_reconfigure.msg import Config
+from dynamic_reconfigure.msg import ConfigDescription
+from dynamic_reconfigure.msg import Group
+from dynamic_reconfigure.msg import GroupState
+from dynamic_reconfigure.msg import ParamDescription
+from dynamic_reconfigure.srv import Reconfigure
+from dynamic_reconfigure.srv import ReconfigureResponse
+
 
 class ManualDr:
     def __init__(self):
-        rospy.init_node('example_server_manual', anonymous = True)
+        rospy.init_node('example_server_manual', anonymous=True)
 
         ns = rospy.get_namespace() + '/' + rospy.get_name()
-        ns = ns.replace('///','/')
+        ns = ns.replace('///', '/')
 
         rospy.loginfo('namespace: ' + ns)
         self.pub = rospy.Publisher(ns + '/parameter_descriptions', ConfigDescription, queue_size=1, latch=True)
@@ -25,7 +30,6 @@ class ManualDr:
             self.cd.max.bools.append(bool_param)
             bool_param.value = False
             self.cd.min.bools.append(bool_param)
-
 
         group_names = ['Default', 'Test']
 
@@ -92,6 +96,7 @@ class ManualDr:
 
     def update(self, msg):
         rospy.loginfo(msg)
+
 
 if __name__ == "__main__":
     manual_dr = ManualDr()

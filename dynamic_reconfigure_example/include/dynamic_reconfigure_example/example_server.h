@@ -28,8 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef IMAGE_MANIP_IIR_IMAGE_H
-#define IMAGE_MANIP_IIR_IMAGE_H
+#ifndef DYNAMIC_RECONFIGURE_EXAMPLE_EXAMPLE_SERVER_H
+#define DYNAMIC_RECONFIGURE_EXAMPLE_EXAMPLE_SERVER_H
 
 #include <dynamic_reconfigure/server.h>
 #include <dynamic_reconfigure_example/ExampleConfig.h>

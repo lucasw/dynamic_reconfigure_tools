@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(dynamic_reconfigure_example)
 
 find_package(catkin REQUIRED COMPONENTS
@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 roslint_cpp()
+set(ROSLINT_PYTHON_OPTS "--ignore=W503" "1>&2")
 roslint_python()
 
 generate_dynamic_reconfigure_options(
