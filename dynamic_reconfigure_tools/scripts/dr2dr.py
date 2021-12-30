@@ -61,8 +61,8 @@ class Dr2Dr():
                 if server_name not in self.server_params.keys():
                     self.server_params[server_name] = []
                 self.server_params[server_name].append(param)
-                rospy.loginfo("new param: " + server_name + " " + param + " " +
-                              str(self.server_params[server_name]))
+                rospy.loginfo("new param: " + server_name + " " + param + " "
+                              + str(self.server_params[server_name]))
 
                 self.server_value_name[param] = config[1]
                 base_cfg.type[param] = config[2]

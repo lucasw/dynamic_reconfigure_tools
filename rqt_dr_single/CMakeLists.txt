@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   rqt_gui_py
 )
 
+set(ROSLINT_PYTHON_OPTS "--ignore=W503" "1>&2")
 roslint_python()
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)

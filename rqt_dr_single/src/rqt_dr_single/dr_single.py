@@ -227,8 +227,8 @@ class DrSingle(Plugin):
         row = 0
         for param in description:
             self.params[param['name']] = param
-            rospy.logdebug(param['name'] + " " + str(param['min']) + " " +
-                           str(param['max']) + " " + str(param['type']))
+            rospy.logdebug(param['name'] + " " + str(param['min']) + " "
+                           + str(param['max']) + " " + str(param['type']))
 
             label = QLabel()
             label.setText(param['name'])
