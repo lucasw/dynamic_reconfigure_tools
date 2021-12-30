@@ -1,4 +1,4 @@
-name: ROS CI
+name: Noetic 20.04 ROS CI
 
 on: [push]
 
@@ -39,7 +39,7 @@ jobs:
       - name: Install ROS additional packages with rosdep
         run: |
             source /opt/ros/$ROS_DISTRO/setup.bash
-            cd ~/catkin_ws
+            cd catkin_ws
             rosdep install --from-paths src --ignore-src -r -s  # do a dry-run first
             rosdep install --from-paths src --ignore-src -r -y
 
