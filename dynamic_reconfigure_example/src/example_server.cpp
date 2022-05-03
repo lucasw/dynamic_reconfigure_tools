@@ -46,7 +46,7 @@ void ExampleServer::onInit()
 {
   server_.reset(new ReconfigureServer(dr_mutex_, getPrivateNodeHandle()));
   dynamic_reconfigure::Server<dynamic_reconfigure_example::ExampleConfig>::CallbackType cbt =
-      boost::bind(&ExampleServer::callback, this, _1, _2);
+      boost::bind(&ExampleServer::callback, this, boost::placeholders::_1, boost::placeholders::_2);
   server_->setCallback(cbt);
 }
 
