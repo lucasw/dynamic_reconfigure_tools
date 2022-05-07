@@ -257,10 +257,10 @@ class DrSingle(Plugin):
                 slider_val = 0.0
                 if param['min'] != param['max']:
                     slider_val = self.div * (param['default'] - param['min']) / (param['max'] - param['min'])
-                widget.setValue(slider_val)
+                widget.setValue(int(slider_val))
                 widget.setOrientation(QtCore.Qt.Horizontal)
-                widget.setMinimum(0.0)
-                widget.setMaximum(self.div)
+                widget.setMinimum(0)
+                widget.setMaximum(int(self.div))
                 self.use_div[param['name']] = True
                 self.connections[param['name']] = partial(self.value_changed,
                                                           param['name'])
@@ -382,7 +382,7 @@ class DrSingle(Plugin):
                         else:
                             value = self.div
                     try:
-                        self.widget[param_name].setValue(value)
+                        self.widget[param_name].setValue(int(value))
                         self.widget[param_name].valueChanged.connect(self.connections[param_name])
                     except TypeError as ex:
                         rospy.logerr("{} {} {}".format(param_name, value, ex))
@@ -461,21 +461,25 @@ class DrSingle(Plugin):
             # TODO(lucasw) could follow
             # https://stackoverflow.com/questions/2829329/catch-a-threads-exception-in-the-caller-thread-in-python
             # and pass a message back if the update configuration fails
+            t0 = rospy.Time.now()
             try:
                 th1 = threading.Thread(target=self.client.update_configuration,
                                        args=[self.changed_value])
                 th1.start()
                 t1 = rospy.Time.now()
                 while ((rospy.Time.now() - t1).to_sec() < update_timeout):
-                    if th1.isAlive():
-                        rospy.sleep(0.01)
+                    if th1.is_alive():
+                        rospy.sleep(0.02)
                     else:
                         break
-                if th1.isAlive():
+                if th1.is_alive():
                     # TODO(lucasw) how to kill t1- or does it matter?
                     raise RuntimeError("timeout")
             except Exception as ex:
-                rospy.logerr("lost connection to server " + str(self.server_name))
+                elapsed = (rospy.Time.now() - t0).to_sec()
+                text = f"lost connection to server {self.server_name} after {elapsed:0.3f}s"
+                rospy.logerr(text)
+                rospy.logerr(ex)
                 self.client = None
                 self.do_update_checkbox.emit(False)
                 return
