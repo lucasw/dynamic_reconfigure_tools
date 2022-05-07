@@ -14,7 +14,9 @@ except ImportError:
 
 from dynamic_reconfigure.server import Server
 from dynamic_reconfigure_tools import base_cfg
-from std_msgs.msg import Empty, Float64, Int32
+from std_msgs.msg import Empty
+# from std_msgs.msg import Float64
+# from std_msgs.msg import Int32
 
 
 class DrTopics():
@@ -66,12 +68,12 @@ class DrTopics():
         self.values = {}
         self.parameters = {}
 
-        # print dir(base_cfg)
+        # print(dir(base_cfg))
         base_cfg.all_level = 1
         # rospy.loginfo(rospy.get_namespace())
         all_params = rospy.get_param_names()
         prefix = rospy.get_namespace() + "controls/"
-        prefix_feedback = rospy.get_namespace() + "feedback/"
+        # prefix_feedback = rospy.get_namespace() + "feedback/"
         rospy.loginfo(rospy.get_namespace())
         level_shift = 0
         for param in all_params:
@@ -82,11 +84,11 @@ class DrTopics():
                     name = rospy.get_param(param)
                     param = param.replace(prefix, "")
                     param = param.replace("/name", "")
-                    topic = rospy.get_param(prefix + param + "/topic")
+                    # topic = rospy.get_param(prefix + param + "/topic")
                     base_cfg.min[param] = rospy.get_param(prefix + param + "/min")
                     base_cfg.max[param] = rospy.get_param(prefix + param + "/max")
                     # TODO(lucasw) set the default somewhere
-                    print name, ':', prefix + param + "/default"
+                    print(f"{name}: {prefix}{param}/default")
                     default = rospy.get_param(prefix + param + "/default", base_cfg.min[param])
                     base_cfg.defaults[param] = default
                     self.values[param] = base_cfg.defaults[param]
