@@ -32,7 +32,7 @@ class DDRTopics():
             # TODO(lucasw) this isn't ideal but need to pare down the names
             name = topic.replace("/", "_").lstrip("_")[-max_len:]
             rospy.loginfo("{} -> {}".format(topic, name))
-            self.pubs[name] = rospy.Publisher(topic, self.msg_class, queue_size=3)
+            self.pubs[name] = rospy.Publisher(topic, self.msg_class, queue_size=3, latch=True)
             if type(default_value) == bool:
                 self.ddr.add_variable(name, topic, default_value)
             else:
@@ -41,14 +41,14 @@ class DDRTopics():
         self.ddr.start(self.dr_callback)
 
     def dr_callback(self, config, level):
-        if self.config is not None:
-            for topic in self.pubs.keys():
+        for topic in self.pubs.keys():
+            if self.config is not None:
                 old_value = getattr(self.config, topic)
-                new_value = getattr(config, topic)
-                if new_value != old_value:
-                    # rospy.loginfo("{} {}".format(topic, new_value))
-                    # TODO(lucasw) this will only work for a few simple message types
-                    self.pubs[topic].publish(self.msg_class(new_value))
+            new_value = getattr(config, topic)
+            if self.config is None or new_value != old_value:
+                # rospy.loginfo("{} {}".format(topic, new_value))
+                # TODO(lucasw) this will only work for a few simple message types
+                self.pubs[topic].publish(self.msg_class(new_value))
 
         self.config = config
         return config
