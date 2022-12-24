@@ -59,5 +59,5 @@ void ExampleServer::callback(dynamic_reconfigure_example::ExampleConfig& config,
 
 };  // namespace dynamic_reconfigure_example
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(dynamic_reconfigure_example::ExampleServer, nodelet::Nodelet)
