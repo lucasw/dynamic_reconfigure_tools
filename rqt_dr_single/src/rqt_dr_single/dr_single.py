@@ -82,6 +82,8 @@ class DrSingle(Plugin):
         self.server_name = rospy.get_param("~server", None)
         if self.server_name is not None and self.server_name[0] != '/':
             self.server_name = rospy.get_namespace() + self.server_name
+        if self.server_name is None:
+            self.server_name = "test"
 
         self.hide_dropdown = rospy.get_param("~hide_dropdown", None)
 
