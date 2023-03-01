@@ -79,11 +79,17 @@ class DrSingle(Plugin):
         self.do_update_dr.connect(self.update_dr)
         self.div = 100.0
 
-        self.server_name = rospy.get_param("~server", None)
-        if self.server_name is not None and self.server_name[0] != '/':
-            self.server_name = rospy.get_namespace() + self.server_name
-        if self.server_name is None:
-            self.server_name = "test"
+        server_name = rospy.get_param("~server", None)
+        if server_name is not None and server_name[0] != '/':
+            server_name = rospy.get_namespace() + server_name
+        text = f"server name is '{server_name}'"
+        if server_name is None:
+            rospy.logwarn(text)
+            # server_name = "test"
+        else:
+            rospy.loginfo(text)
+        with self.lock:
+            self.server_name = server_name
 
         self.hide_dropdown = rospy.get_param("~hide_dropdown", None)
 
@@ -120,22 +126,25 @@ class DrSingle(Plugin):
         # TODO(lucasw) need to call this repeatedly, setup time callback here
 
     def update_topic_list(self):
+        with self.lock:
+            server_name = self.server_name
         # TODO(lucasw) if the roscore goes down, this throws a socket error
         topics = rospy.get_published_topics()
         self.server_combobox.currentIndexChanged.disconnect(self.server_changed)
         self.server_combobox.clear()
-        rospy.logdebug(self.server_name)
-        if self.server_name is not None:
-            self.server_combobox.addItem(self.server_name)
+        rospy.logdebug(server_name)
+        if server_name is not None:
+            self.server_combobox.addItem(server_name)
         dr_list = []
         for topic in topics:
             if topic[1] == 'dynamic_reconfigure/ConfigDescription':
-                server_name = topic[0][:topic[0].rfind('/')]
-                if server_name != self.server_name:
-                    dr_list.append(server_name)
+                new_server_name = topic[0][:topic[0].rfind('/')]
+                if new_server_name != server_name:
+                    dr_list.append(new_server_name)
                 # default to choosing the first one
-                # if self.server_name is None:
-                #     self.server_name = server_name
+                # if server_name is None:
+                #     with self.lock:
+                #         self.server_name = server_name
         dr_list.sort()
         self.server_combobox.addItems(dr_list)
         self.server_combobox.currentIndexChanged.connect(self.server_changed)
@@ -161,18 +170,18 @@ class DrSingle(Plugin):
         self.do_update_description.emit(description)
 
     def reset(self, use_lock=True):
-        self.lock.acquire()
-        rospy.logdebug("reset")
-        self.described = False
-        self.widget = {}
-        self.enum_values = {}
-        self.enum_inds = {}
-        self.connections = {}
-        self.use_div = {}
-        self.params = {}
-        self.val_label = {}
-        self.config = None
-        self.lock.release()
+        # TODO(lucasw) actually use the lock optionally
+        with self.lock:
+            rospy.logdebug("reset")
+            self.described = False
+            self.widget = {}
+            self.enum_values = {}
+            self.enum_inds = {}
+            self.connections = {}
+            self.use_div = {}
+            self.params = {}
+            self.val_label = {}
+            self.config = None
 
     def add_label(self, name, row):
         # TODO(lucasw) don't really need this
@@ -206,7 +215,14 @@ class DrSingle(Plugin):
     def update_description(self, description):
         if rospy.is_shutdown():
             return
-        self.lock.acquire()
+        with self.lock:
+            updated = self.update_description_inner(description)
+        if updated:
+            rospy.loginfo("updated description")
+            if self.config:
+                self.update_config(self.config)
+
+    def update_description_inner(self, description) -> bool:
         # clear the layout
         # rospy.loginfo("clearing layout " + str(self.layout.count()))
         try:
@@ -220,8 +236,7 @@ class DrSingle(Plugin):
                     self.layout.itemAt(i).widget().setParent(None)
         except RuntimeError as ex:
             rospy.logerr(ex)
-            self.lock.release()
-            return
+            return False
         # TODO(lucasw) this has the min and max values and types from which to
         # generate the gui
         # But no group information
@@ -322,10 +337,7 @@ class DrSingle(Plugin):
                 # self.layout.addWidget(val_label, row, 2)
                 row += 1
         self.described = True
-        self.lock.release()
-        rospy.loginfo("updated description")
-        if self.config:
-            self.update_config(self.config)
+        return True
 
     def config_callback(self, config):
         # The first config/description callback happen out of order-
@@ -341,7 +353,10 @@ class DrSingle(Plugin):
         # if not self.client:
         #     return
         rospy.logdebug(config)
-        self.lock.acquire()
+        with self.lock:
+            self.update_config_inner(config)
+
+    def update_config_inner(self, config):
         for param_name in config.keys():
             if param_name not in self.widget.keys():
                 continue
@@ -402,7 +417,6 @@ class DrSingle(Plugin):
                 # rospy.logerr(param_name + str(ex))
                 # self.reset(use_lock=False)
                 # break
-        self.lock.release()
 
     def text_resend(self, name):
         self.changed_value[name] = self.widget[name].text()
@@ -440,7 +454,9 @@ class DrSingle(Plugin):
         self.connected_checkbox.setChecked(value)
 
     def connect_dr(self):
-        if self.server_name is None:
+        with self.lock:
+            server_name = self.server_name
+        if server_name is None:
             return
         try:
             # TODO(lucasw) surely this timeout has nothing to do with ros time
@@ -448,12 +464,12 @@ class DrSingle(Plugin):
             # This takes up 0.3 second no matter what
             # and seems to block the main gui thread  though I haven't
             # exhausted options for running it in other threads
-            self.client = Client(self.server_name, timeout=0.2,
+            self.client = Client(server_name, timeout=0.2,
                                  config_callback=self.config_callback,
                                  description_callback=self.description_callback)
             self.do_update_checkbox.emit(True)
         except Exception as ex:  # ROSException:
-            rospy.logdebug("no server " + str(self.server_name))
+            rospy.logdebug("no server " + str(server_name))
 
     def update_dr_configuration(self, evt):
         if self.client is None:
@@ -501,7 +517,8 @@ class DrSingle(Plugin):
     # This is called after init
     def restore_settings(self, plugin_settings, instance_settings):
         if instance_settings.contains('server_name') and self.server_name is None:
-            self.server_name = instance_settings.value('server_name')
+            with self.lock:
+                self.server_name = instance_settings.value('server_name')
             rospy.logdebug("restore server " + self.server_name)
             self.update_topic_list()
         if self.server_name is None:
