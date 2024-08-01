@@ -66,32 +66,52 @@ async fn main() -> Result<(), anyhow::Error> {
 
     let name = args2[2].to_string();
 
-    let req = {
+    #[derive(Debug)]
+    enum ParamType {
+        INT,
+        DOUBLE,
+        BOOL,
+        STR,
+    }
+    let param_type;
+
+    let request = {
         let raw_value = &args2[3];
+        let name = name.clone();
         let mut req = dynamic_reconfigure::ReconfigureRequest::default();
         // TODO(lucasw) with this setup can't set a string to 'true' or a number, need to prefix
         // it with other text to make it fail through
         // could require a type be provided on the command line instead
-        if let Ok(double_value) = raw_value.parse::<f64>() {
+        if let Ok(int_value) = raw_value.parse::<i32>() {
+            let mut int_param = dynamic_reconfigure::IntParameter::default();
+            int_param.name = name.to_string();
+            int_param.value = int_value;
+            req.config.ints.push(int_param);
+            param_type = ParamType::INT;
+        } else if let Ok(double_value) = raw_value.parse::<f64>() {
             let mut double_param = dynamic_reconfigure::DoubleParameter::default();
             double_param.name = name;
             double_param.value = double_value;
             req.config.doubles.push(double_param);
+            param_type = ParamType::DOUBLE;
         } else if let Ok(int_value) = raw_value.parse::<i32>() {
             let mut int_param = dynamic_reconfigure::IntParameter::default();
             int_param.name = name.to_string();
             int_param.value = int_value;
             req.config.ints.push(int_param);
+            param_type = ParamType::INT;
         } else if let Ok(bool_value) = raw_value.parse::<bool>() {
             let mut bool_param = dynamic_reconfigure::BoolParameter::default();
             bool_param.name = name.to_string();
             bool_param.value = bool_value;
             req.config.bools.push(bool_param);
+            param_type = ParamType::BOOL;
         } else {
             let mut str_param = dynamic_reconfigure::StrParameter::default();
             str_param.name = name;
             str_param.value = raw_value.to_string();
             req.config.strs.push(str_param);
+            param_type = ParamType::STR;
         }
         // TODO(lucasw) enum params
 
@@ -99,8 +119,53 @@ async fn main() -> Result<(), anyhow::Error> {
         req
     };
 
-    let response = client.call(&req).await?;
-    tracing::info!("Got response: {:?}", response);
+    let response = client.call(&request).await?;
+    // tracing::info!("Got response: {:?}", response);
+
+    // show if request changed the value
+    let mut name_in_response = false;
+    match param_type {
+        // TODO(lucasw) could construct a hashmap of param type and config values
+        ParamType::INT => {
+            for intv in &response.config.ints {
+                if intv.name == name {
+                    tracing::info!("{param_type:?} {name} set to {}", intv.value);
+                    name_in_response = true;
+                    break;
+                }
+            }
+        },
+        ParamType::DOUBLE => {
+            for doublev in &response.config.doubles {
+                if doublev.name == name {
+                    tracing::info!("{param_type:?} {name} set to {}", doublev.value);
+                    name_in_response = true;
+                    break;
+                }
+            }
+        },
+        ParamType::BOOL => {
+            for boolv in &response.config.bools {
+                if boolv.name == name {
+                    tracing::info!("{param_type:?} {name} set to {}", boolv.value);
+                    name_in_response = true;
+                    break;
+                }
+            }
+        },
+        ParamType::STR => {
+            for strv in &response.config.strs {
+                if strv.name == name {
+                    tracing::info!("{param_type:?} {name} set to {}", strv.value);
+                    name_in_response = true;
+                    break;
+                }
+            }
+        },
+    }
+    if !name_in_response {
+        tracing::error!("{param_type:?} {name} not found {:?}", response.config);
+    }
 
     Ok(())
 }
