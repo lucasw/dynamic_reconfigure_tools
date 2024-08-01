@@ -1,0 +1,32 @@
+[package]
+name = "dynamic_reconfigure_tools"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+license = "BSD 3-Clause"
+publish = false
+description = """
+Utilities for use with ros tf
+
+tf2tf (called old_tf_to_new_tf in C++ and python versions) is node that looks up the transform between
+any two frames and publishes out that transform with a new parent and child (it's up to the user
+to prevent conflicts if the child already exists)
+"""
+
+[dependencies]
+anyhow = "1.0.86"
+nalgebra = "0.30"
+# opencv = "0.92.1"
+tokio = "1.38.0"
+tracing = "0.1.40"
+tracing-subscriber = "0.3.18"
+
+[dependencies.roslibrust]
+version="0.10.2"
+features = ["ros1"]
+
+[dependencies.roslibrust_codegen]
+version="0.10"
+
+[dependencies.roslibrust_codegen_macro]
+version="0.10"
