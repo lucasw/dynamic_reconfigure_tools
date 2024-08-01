@@ -13,7 +13,7 @@ async fn main() -> Result<(), anyhow::Error> {
     tracing::subscriber::set_global_default(tracing_sub)?;
 
     let mut params = HashMap::<String, String>::new();
-    params.insert("_name".to_string(), "camera_fov_plane_intersection".to_string());
+    params.insert("_name".to_string(), "dynrec".to_string());
     params.insert("_ns".to_string(), "".to_string());
 
     // TODO(lucasw) can an existing rust arg handling library handle the ':=' ros cli args?
