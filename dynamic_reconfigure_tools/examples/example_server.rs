@@ -100,20 +100,18 @@ async fn main() -> Result<(), anyhow::Error> {
     tracing::info!("Initial config: {config_state:?}");
 
     // TODO(lucasw) need these to be latched, but maybe just regularly publishing will work
-    let config_pub: Publisher<dynamic_reconfigure::Config> = nh.advertise(&format!("{}/parameter_updates", full_node_name.as_str()), 3).await?;
-    let description_pub: Publisher<dynamic_reconfigure::ConfigDescription> = nh.advertise(&format!("{}/parameter_descriptions", full_node_name.as_str()), 3).await?;
+    let latch = true;
+    let config_pub: Publisher<dynamic_reconfigure::Config> = nh.advertise(&format!("{}/parameter_updates", full_node_name.as_str()), 3 /*, latch*/).await?;
+    let description_pub: Publisher<dynamic_reconfigure::ConfigDescription> = nh.advertise(&format!("{}/parameter_descriptions", full_node_name.as_str()), 3/*, latch*/).await?;
 
     let config_state_copy = config_state.clone();
     let server_fn = move |request: dynamic_reconfigure::ReconfigureRequest| {
         tracing::info!("{request:?}");
 
         let mut config = config_state_copy.lock().unwrap();
-        tracing::info!(".");
 
-        // TODO(lucasw) actually change values in config_state if the request
-        // has matching types and names (and clip the values to min and max)
         // TODO(lucasw) need a hashmap as base structure so don't have to do double for loops
-        // and then convert it to and from Config as needed
+        // - then convert it to and from Config as needed
         // for intv in request.config.ints {
         // }
         'outer: for req_strv in request.config.strs {
@@ -138,13 +136,16 @@ async fn main() -> Result<(), anyhow::Error> {
     let _server_handle = nh
         .advertise_service::<dynamic_reconfigure::Reconfigure, _>(&full_server_name, server_fn)
         .await.expect("can't connect to {full_server_name}");
-    tracing::info!("connected to dynamic reconfigure server {full_server_name}");
+    tracing::info!("serving dynamic reconfigure server on {full_server_name}");
 
     // Setup a task to kill this process when ctrl_c comes in:
     tokio::spawn(async move {
         tokio::signal::ctrl_c().await.unwrap();
         std::process::exit(0);
     });
+
+    tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+    // let _ = description_pub.publish(&config_description).await;
 
     loop {
         // let config_state = config_state.lock().unwrap().clone();
