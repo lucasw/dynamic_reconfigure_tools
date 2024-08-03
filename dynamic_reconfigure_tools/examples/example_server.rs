@@ -101,10 +101,12 @@ async fn main() -> Result<(), anyhow::Error> {
 
     // TODO(lucasw) need these to be latched, but maybe just regularly publishing will work
     let latch = true;
-    let config_pub: Publisher<dynamic_reconfigure::Config> = nh.advertise(&format!("{}/parameter_updates", full_node_name.as_str()), 3 /*, latch*/).await?;
-    let description_pub: Publisher<dynamic_reconfigure::ConfigDescription> = nh.advertise(&format!("{}/parameter_descriptions", full_node_name.as_str()), 3/*, latch*/).await?;
+    let update_pub: Publisher<dynamic_reconfigure::Config> = nh.advertise(&format!("{}/parameter_updates", full_node_name.as_str()), 3, latch).await?;
+    let do_update_pub = Arc::new(Mutex::new(true));
+    let description_pub: Publisher<dynamic_reconfigure::ConfigDescription> = nh.advertise(&format!("{}/parameter_descriptions", full_node_name.as_str()), 3, latch).await?;
 
     let config_state_copy = config_state.clone();
+    let do_update_pub_copy = do_update_pub.clone();
     let server_fn = move |request: dynamic_reconfigure::ReconfigureRequest| {
         tracing::info!("{request:?}");
 
@@ -124,9 +126,7 @@ async fn main() -> Result<(), anyhow::Error> {
                 }
             }
         }
-        // TODO(lucasw) only publish if updated?
-        // only do this here if latched
-        // let _ = config_pub.publish(&config).await;
+        *do_update_pub_copy.lock().unwrap() = true;
 
         Ok(dynamic_reconfigure::ReconfigureResponse {
             config: config.clone(),
@@ -145,14 +145,22 @@ async fn main() -> Result<(), anyhow::Error> {
     });
 
     tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
-    // let _ = description_pub.publish(&config_description).await;
+    let _ = description_pub.publish(&config_description).await;
 
     loop {
         // let config_state = config_state.lock().unwrap().clone();
         // tracing::info!("Current value of config: {config_state:?}");
-        let config = config_state.lock().unwrap().clone();
-        let _ = config_pub.publish(&config).await;
-        let _ = description_pub.publish(&config_description).await;
+        {
+            // TODO(lucasw) can't await in the server_fn above, so doing this arc mutex - is there
+            // a better way?
+            let mut do_update_pub = do_update_pub.lock().unwrap();
+            if *do_update_pub {
+                let config = config_state.lock().unwrap().clone();
+                let _ = update_pub.publish(&config).await;
+                *do_update_pub = false;
+            }
+        }
+        // let _ = description_pub.publish(&config_description).await;
         tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
     }
 }
