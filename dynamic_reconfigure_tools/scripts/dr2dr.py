@@ -24,7 +24,7 @@ from dynamic_reconfigure.client import Client
 from dynamic_reconfigure.server import Server
 from functools import partial
 from dynamic_reconfigure_tools import base_cfg
-from std_msgs.msg import Empty, Int32
+from std_msgs.msg import Empty
 
 
 class Dr2Dr():
