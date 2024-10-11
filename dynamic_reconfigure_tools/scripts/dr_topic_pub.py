@@ -7,11 +7,6 @@ import copy
 import roslib.message
 import rospy
 
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from io import StringIO
-
 from dynamic_reconfigure.server import Server
 from dynamic_reconfigure_tools import base_cfg
 from std_msgs.msg import Empty
@@ -39,6 +34,7 @@ class DrTopics():
 
     def make_pub(self):
         self.msg_class = roslib.message.get_message_class(self.msg_name)
+        rospy.loginfo(f"{self.msg_name} {self.msg_class}, update at {self.dt}s")
 
     def dont_use(self):
         self.msg_class = roslib.message.get_message_class(self.msg_name)
