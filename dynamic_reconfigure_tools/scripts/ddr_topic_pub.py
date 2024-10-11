@@ -33,7 +33,7 @@ class DDRTopics():
             name = topic.replace("/", "_").lstrip("_")[-max_len:]
             rospy.loginfo("{} -> {}".format(topic, name))
             self.pubs[name] = rospy.Publisher(topic, self.msg_class, queue_size=3, latch=True)
-            if type(default_value) == bool:
+            if type(default_value) is bool:
                 self.ddr.add_variable(name, topic, default_value)
             else:
                 self.ddr.add_variable(name, topic, default_value, min_value, max_value)
