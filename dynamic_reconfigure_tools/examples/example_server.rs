@@ -1,8 +1,7 @@
 /// example dynamic reconfigure server
+use roslibrust_util::dynamic_reconfigure;
 use std::collections::HashMap;
 use tracing_subscriber;
-
-roslibrust_codegen_macro::find_and_generate_ros_messages!();
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
@@ -14,44 +13,18 @@ async fn main() -> Result<(), anyhow::Error> {
 
     let mut params = HashMap::<String, String>::new();
     params.insert("_name".to_string(), "dynrec_server".to_string());
-    params.insert("_ns".to_string(), "".to_string());
+    let mut remaps = HashMap::<String, String>::new();
 
-    // TODO(lucasw) can an existing rust arg handling library handle the ':=' ros cli args?
-    let args = std::env::args();
-    let mut args2 = Vec::new();
-    for arg in args {
-        let key_val: Vec<&str> = arg.split(":=").collect();
-        if key_val.len() != 2 {
-            args2.push(arg);
-            continue;
-        }
+    let (_ns, full_node_name, _remaining_args) =
+        roslibrust_util::get_params_remaps(&mut params, &mut remaps);
 
-        let (mut key, val) = (key_val[0].to_string(), key_val[1].to_string());
-        if !key.starts_with("_") {
-            println!("unused arg pair {key}:={val}- need to prefix name with underscore");
-            continue;
-        }
-        key.replace_range(0..1, "");
-
-        if params.contains_key(&key) {
-            params.insert(key, val);
-        } else {
-            println!("unused '{key}' '{val}'");
-        }
-    }
-    println!("{args2:?}");
-
-    let ns = params.remove("_ns").unwrap();
-    let full_node_name = &format!("/{}/{}", &ns, &params["_name"],).replace("//", "/");
     let ros_master_uri =
         std::env::var("ROS_MASTER_URI").unwrap_or("http://localhost:11311".to_string());
-    let nh = NodeHandle::new(&ros_master_uri, full_node_name).await?;
+    let nh = NodeHandle::new(&ros_master_uri, &full_node_name).await?;
     tracing::info!("connected to roscore at {ros_master_uri}");
 
     // Dynamic reconfigure service and topics
-    let full_server_name = &format!("/{}/set_parameters", &full_node_name,)
-        .replace("//", "/")
-        .replace("set_parameters/set_parameters", "set_parameters");
+    let full_server_name = dynamic_reconfigure_tools::get_server_name(&full_node_name);
 
     let mut config_description = dynamic_reconfigure::ConfigDescription::default();
     let config_state = Arc::new(Mutex::new(dynamic_reconfigure::Config::default()));
@@ -124,15 +97,17 @@ async fn main() -> Result<(), anyhow::Error> {
         'outer: for req_strv in request.config.strs {
             for strv in &mut config.strs {
                 if req_strv.name == strv.name {
-                    // TODO(lucasw) also need to clip to min max values
-                    tracing::info!(
-                        "set {} value {} to {}",
-                        strv.name,
-                        strv.value,
-                        req_strv.value
-                    );
-                    strv.value = req_strv.value;
-                    break 'outer;
+                    if strv.value != req_strv.value {
+                        // TODO(lucasw) also need to clip to min max values
+                        tracing::info!(
+                            "set '{}' value '{}' to '{}'",
+                            strv.name,
+                            strv.value,
+                            req_strv.value
+                        );
+                        strv.value = req_strv.value;
+                        break 'outer;
+                    }
                 }
             }
         }
@@ -156,7 +131,7 @@ async fn main() -> Result<(), anyhow::Error> {
     });
 
     tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
-    let _ = description_pub.publish(&config_description).await;
+    let _ = description_pub.publish(&config_description);
 
     loop {
         // let config_state = config_state.lock().unwrap().clone();
@@ -167,11 +142,11 @@ async fn main() -> Result<(), anyhow::Error> {
             let mut do_update_pub = do_update_pub.lock().unwrap();
             if *do_update_pub {
                 let config = config_state.lock().unwrap().clone();
-                let _ = update_pub.publish(&config).await;
+                let _ = update_pub.publish(&config);
                 *do_update_pub = false;
             }
         }
-        // let _ = description_pub.publish(&config_description).await;
+        // let _ = description_pub.publish(&config_description);
         tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
     }
 }
