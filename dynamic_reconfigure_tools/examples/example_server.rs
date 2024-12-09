@@ -1,5 +1,4 @@
 /// example dynamic reconfigure server
-
 use std::collections::HashMap;
 use tracing_subscriber;
 
@@ -43,20 +42,14 @@ async fn main() -> Result<(), anyhow::Error> {
     println!("{args2:?}");
 
     let ns = params.remove("_ns").unwrap();
-    let full_node_name = &format!(
-        "/{}/{}",
-        &ns,
-        &params["_name"],
-        ).replace("//", "/");
-    let ros_master_uri = std::env::var("ROS_MASTER_URI").unwrap_or("http://localhost:11311".to_string());
+    let full_node_name = &format!("/{}/{}", &ns, &params["_name"],).replace("//", "/");
+    let ros_master_uri =
+        std::env::var("ROS_MASTER_URI").unwrap_or("http://localhost:11311".to_string());
     let nh = NodeHandle::new(&ros_master_uri, full_node_name).await?;
     tracing::info!("connected to roscore at {ros_master_uri}");
 
     // Dynamic reconfigure service and topics
-    let full_server_name = &format!(
-        "/{}/set_parameters",
-        &full_node_name,
-        )
+    let full_server_name = &format!("/{}/set_parameters", &full_node_name,)
         .replace("//", "/")
         .replace("set_parameters/set_parameters", "set_parameters");
 
@@ -101,9 +94,21 @@ async fn main() -> Result<(), anyhow::Error> {
 
     // TODO(lucasw) need these to be latched, but maybe just regularly publishing will work
     let latch = true;
-    let update_pub: Publisher<dynamic_reconfigure::Config> = nh.advertise(&format!("{}/parameter_updates", full_node_name.as_str()), 3, latch).await?;
+    let update_pub: Publisher<dynamic_reconfigure::Config> = nh
+        .advertise(
+            &format!("{}/parameter_updates", full_node_name.as_str()),
+            3,
+            latch,
+        )
+        .await?;
     let do_update_pub = Arc::new(Mutex::new(true));
-    let description_pub: Publisher<dynamic_reconfigure::ConfigDescription> = nh.advertise(&format!("{}/parameter_descriptions", full_node_name.as_str()), 3, latch).await?;
+    let description_pub: Publisher<dynamic_reconfigure::ConfigDescription> = nh
+        .advertise(
+            &format!("{}/parameter_descriptions", full_node_name.as_str()),
+            3,
+            latch,
+        )
+        .await?;
 
     let config_state_copy = config_state.clone();
     let do_update_pub_copy = do_update_pub.clone();
@@ -120,9 +125,14 @@ async fn main() -> Result<(), anyhow::Error> {
             for strv in &mut config.strs {
                 if req_strv.name == strv.name {
                     // TODO(lucasw) also need to clip to min max values
-                    tracing::info!("set {} value {} to {}", strv.name, strv.value, req_strv.value);
+                    tracing::info!(
+                        "set {} value {} to {}",
+                        strv.name,
+                        strv.value,
+                        req_strv.value
+                    );
                     strv.value = req_strv.value;
-                    break 'outer
+                    break 'outer;
                 }
             }
         }
@@ -135,7 +145,8 @@ async fn main() -> Result<(), anyhow::Error> {
 
     let _server_handle = nh
         .advertise_service::<dynamic_reconfigure::Reconfigure, _>(&full_server_name, server_fn)
-        .await.expect("can't connect to {full_server_name}");
+        .await
+        .expect("can't connect to {full_server_name}");
     tracing::info!("serving dynamic reconfigure server on {full_server_name}");
 
     // Setup a task to kill this process when ctrl_c comes in:

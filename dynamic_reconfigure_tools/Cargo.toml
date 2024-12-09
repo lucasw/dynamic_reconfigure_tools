@@ -14,7 +14,7 @@ to prevent conflicts if the child already exists)
 """
 
 [dependencies]
-anyhow = "1.0.86"
+anyhow = "1.0.88"
 nalgebra = "0.30"
 # opencv = "0.92.1"
 tokio = "1.38.0"
@@ -22,20 +22,16 @@ tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
 
 [dependencies.roslibrust]
-git = "https://github.com/Carter12s/roslibrust"
-branch = "master"
-# path = "../../../../../other/src/rust/roslibrust/roslibrust"
+git = "https://github.com/lucasw/roslibrust"
+branch = "get_rx_msg_def"
+# path = "../../roslibrust/roslibrust"
 # version="0.10.2"
 features = ["ros1"]
 
-[dependencies.roslibrust_codegen]
-git = "https://github.com/Carter12s/roslibrust"
-branch = "master"
-# path = "../../../../../other/src/rust/roslibrust/roslibrust_codegen"
-# version="0.10"
+# [dependencies.roslibrust_codegen]
+# git = "https://github.com/lucasw/roslibrust"
+# branch = "get_rx_msg_def"
 
-[dependencies.roslibrust_codegen_macro]
-git = "https://github.com/Carter12s/roslibrust"
-branch = "master"
-# path = "../../../../../other/src/rust/roslibrust/roslibrust_codegen_macro"
-# version="0.10"
+[dependencies.roslibrust_util]
+git = "https://github.com/lucasw/tf_roslibrust"
+version = "0.1.0"
