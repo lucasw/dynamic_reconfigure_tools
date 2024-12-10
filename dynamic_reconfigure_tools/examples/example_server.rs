@@ -1,6 +1,5 @@
 /// example dynamic reconfigure server
 use roslibrust::ros1::NodeHandle;
-use roslibrust_util::dynamic_reconfigure;
 use std::collections::HashMap;
 use tracing_subscriber;
 
@@ -41,7 +40,9 @@ async fn main() -> Result<(), anyhow::Error> {
                 break;
             }
             _ = update_interval.tick() => {
+            //_ = dr.update_receiver.recv() => {
                 // let stamp = tf_util::stamp_now();
+                dr.update();
             }
         }
     }

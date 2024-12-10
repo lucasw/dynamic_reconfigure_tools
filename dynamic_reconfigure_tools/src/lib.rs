@@ -1,5 +1,7 @@
 use roslibrust::ros1::Publisher;
 use roslibrust_util::dynamic_reconfigure;
+use std::sync::{Arc, Mutex};
+// use tokio::sync::mpsc;
 
 pub fn get_server_name(partial_server_name: &str) -> String {
     format!("/{}/set_parameters", &partial_server_name,)
@@ -56,10 +58,13 @@ pub fn raw_value_to_request(
 
 pub struct DynamicReconfigure {
     config_description: dynamic_reconfigure::ConfigDescription,
-    config_state: dynamic_reconfigure::Config,
+    config_state: Arc<Mutex<dynamic_reconfigure::Config>>,
     update_pub: Publisher<dynamic_reconfigure::Config>,
     description_pub: Publisher<dynamic_reconfigure::ConfigDescription>,
-    server_handle: roslibrust::ros1::ServiceServer,
+    _server_handle: roslibrust::ros1::ServiceServer,
+    // this doesn't work, panics
+    // pub update_receiver: mpsc::Receiver<bool>,
+    do_update_pub: Arc<Mutex<bool>>,
 }
 
 impl DynamicReconfigure {
@@ -89,6 +94,7 @@ impl DynamicReconfigure {
 
             config_state.groups.push(group_state);
         }
+        let config_state = Arc::new(Mutex::new(config_state));
         tracing::info!("Initial config: {config_state:?}");
 
         // TODO(lucasw) need these to be latched, but maybe just regularly publishing will work
@@ -105,13 +111,17 @@ impl DynamicReconfigure {
             )
             .await?;
 
+        let do_update_pub = Arc::new(Mutex::new(true));
+
+        // can't use these within the closure
+        // let (update_sender, update_receiver) = mpsc::channel(4);
+        let config_state_copy = config_state.clone();
+        let do_update_pub_copy = do_update_pub.clone();
+
         let server_fn = move |request: dynamic_reconfigure::ReconfigureRequest| {
             tracing::info!("{request:?}");
 
-            let config_state = dynamic_reconfigure::Config::default();
-
             // TODO(lucasw) store the changed value in the main DR config_state
-            /*
             let mut config = config_state_copy.lock().unwrap();
 
             // TODO(lucasw) need a hashmap as base structure so don't have to do double for loops
@@ -120,25 +130,25 @@ impl DynamicReconfigure {
             // }
             'outer: for req_strv in request.config.strs {
                 for strv in &mut config.strs {
-                    if req_strv.name == strv.name {
-                        if strv.value != req_strv.value {
-                            // TODO(lucasw) also need to clip to min max values
-                            tracing::info!(
-                                "set '{}' value '{}' to '{}'",
-                                strv.name,
-                                strv.value,
-                                req_strv.value
-                            );
-                            strv.value = req_strv.value;
-                            break 'outer;
-                        }
+                    if req_strv.name == strv.name && strv.value != req_strv.value {
+                        // TODO(lucasw) also need to clip to min max values
+                        tracing::info!(
+                            "set '{}' value '{}' to '{}'",
+                            strv.name,
+                            strv.value,
+                            req_strv.value
+                        );
+                        strv.value = req_strv.value;
+                        break 'outer;
                     }
                 }
             }
+            // this panics, also can't do regular send because that requires async
+            // let rv = update_sender.blocking_send(true);
+            // tracing::info!("update sender: {rv:?}");
             *do_update_pub_copy.lock().unwrap() = true;
-            */
             Ok(dynamic_reconfigure::ReconfigureResponse {
-                config: config_state,
+                config: config.clone(),
             })
         };
 
@@ -149,13 +159,17 @@ impl DynamicReconfigure {
             .expect("can't connect to {full_server_name}");
         tracing::info!("serving dynamic reconfigure server on {full_server_name}");
 
-        Ok(Self {
+        let dr = Self {
             config_description,
             config_state,
             update_pub,
             description_pub,
-            server_handle,
-        })
+            _server_handle: server_handle,
+            // update_receiver,
+            do_update_pub,
+        };
+
+        Ok(dr)
     }
 
     pub fn add_str_param(&mut self, name: &str, value: &str, description: &str) {
@@ -182,28 +196,27 @@ impl DynamicReconfigure {
         self.config_description.max.strs.push(param.clone());
         self.config_description.dflt.strs.push(param.clone());
 
-        self.config_state.strs.push(param);
+        self.config_state.lock().unwrap().strs.push(param);
     }
 
     pub fn init(&self) {
         let _ = self.description_pub.publish(&self.config_description);
     }
 
-    /*
-    fn update(&self) {
-        // let config_state = config_state.lock().unwrap().clone();
-        // tracing::info!("Current value of config: {config_state:?}");
-        {
-            // TODO(lucasw) can't await in the server_fn above, so doing this arc mutex - is there
-            // a better way?
-            let mut do_update_pub = do_update_pub.lock().unwrap();
-            if *do_update_pub {
-                let config = config_state.lock().unwrap().clone();
-                let _ = update_pub.publish(&config);
-                *do_update_pub = false;
+    pub fn update(&self) {
+        let mut do_update_pub = self.do_update_pub.lock().unwrap();
+        if *do_update_pub {
+            *do_update_pub = false;
+            match self.config_state.lock() {
+                Ok(config_state) => {
+                    let _ = self.update_pub.publish(&config_state.clone());
+                    // let _ = self.description_pub.publish(&config_description);
+                }
+                Err(err) => {
+                    // TODO(lucasw) should return this
+                    tracing::warn!("{err:?}");
+                }
             }
         }
-        // let _ = description_pub.publish(&config_description);
     }
-    */
 }
