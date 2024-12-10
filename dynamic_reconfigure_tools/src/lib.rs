@@ -252,7 +252,15 @@ impl DynamicReconfigure {
         self.config_state.lock().unwrap().bools.push(param);
     }
 
-    pub fn add_int_param(&mut self, name: &str, value: i32, min: i32, max: i32, description: &str) {
+    fn add_int_param_inner(
+        &mut self,
+        name: &str,
+        value: i32,
+        min: i32,
+        max: i32,
+        description: &str,
+        edit_method: String,
+    ) {
         let param = dynamic_reconfigure::IntParameter {
             name: name.to_string(),
             value,
@@ -271,7 +279,7 @@ impl DynamicReconfigure {
             r#type: "int".to_string(),
             level: 1,
             description: description.to_string(),
-            edit_method: "".to_string(),
+            edit_method,
         };
 
         // TODO(lucasw) assume only one group, all that is supported currently
@@ -285,6 +293,10 @@ impl DynamicReconfigure {
         self.config_description.dflt.ints.push(param.clone());
 
         self.config_state.lock().unwrap().ints.push(param);
+    }
+
+    pub fn add_int_param(&mut self, name: &str, value: i32, min: i32, max: i32, description: &str) {
+        self.add_int_param_inner(name, value, min, max, description, "".to_string());
     }
 
     pub fn add_str_param(&mut self, name: &str, value: &str, description: &str) {
@@ -354,6 +366,41 @@ impl DynamicReconfigure {
         self.config_description.dflt.doubles.push(param.clone());
 
         self.config_state.lock().unwrap().doubles.push(param);
+    }
+
+    pub fn add_enum_param(
+        &mut self,
+        name: &str,
+        value: i32,
+        items: Vec<(&str, &str)>,
+        enum_description: &str,
+    ) {
+        // Generate a list of strings to put into edit_method
+        //    "{'enum': [
+        //    {'name': 'manual', 'type': 'int', 'value': 0, 'srcline': 139, 'srcfile': 'foo.rs', 'description': 'bar', 'ctype': 'int', 'cconsttype': 'const int'},
+        //    ...
+        //    ], 'enum_description': 'my enum description'}"
+
+        let num = items.len();
+        if num == 0 {
+            // TODO(lucasw) return error
+            tracing::warn!("no items");
+            return;
+        }
+        let max = (num - 1) as i32;
+
+        // TODO(lucasw) could use a json (or yaml) library but just do the above manually for now
+        let mut edit_method = "{'enum': [ ".to_string();
+        for (index, (name, description)) in items.iter().enumerate() {
+            if index > 0 {
+                edit_method += ", ";
+            }
+            let item = format!("{{'name': '{name}', 'type': 'int', 'value': {index}, 'srcline': 0, 'srcfile': 'tbd', 'description': '{description}', 'ctype': 'int', 'cconsttype': 'const int'}}");
+            edit_method += &item;
+        }
+        edit_method += "], 'enum_description': 'my enum description'}";
+
+        self.add_int_param_inner(name, value, 0, max, enum_description, edit_method);
     }
 
     pub fn init(&self) {

@@ -29,6 +29,12 @@ async fn main() -> Result<(), anyhow::Error> {
     dr.add_str_param("another", "bar2", "another string param");
     dr.add_int_param("int val", 50, -20, 200, "int param");
 
+    let mut dr_enums = Vec::new();
+    dr_enums.push(("foo", "somme foo"));
+    dr_enums.push(("bar", "somme bar"));
+    dr_enums.push(("tmp", "somme tmp enum"));
+    dr.add_enum_param("my enum", 1, dr_enums, "select amongst these");
+
     tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
     dr.init();
 
