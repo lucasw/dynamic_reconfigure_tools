@@ -36,10 +36,6 @@ pub fn raw_value_to_request(
         let double_param = dynamic_reconfigure::DoubleParameter { name, value };
         req.config.doubles.push(double_param);
         param_type = ParamType::DOUBLE;
-    } else if let Ok(value) = raw_value.parse::<i32>() {
-        let int_param = dynamic_reconfigure::IntParameter { name, value };
-        req.config.ints.push(int_param);
-        param_type = ParamType::INT;
     } else if let Ok(value) = raw_value.parse::<bool>() {
         let bool_param = dynamic_reconfigure::BoolParameter { name, value };
         req.config.bools.push(bool_param);
@@ -126,23 +122,72 @@ impl DynamicReconfigure {
 
             // TODO(lucasw) need a hashmap as base structure so don't have to do double for loops
             // - then convert it to and from Config as needed
-            // for intv in request.config.ints {
-            // }
-            'outer: for req_strv in request.config.strs {
-                for strv in &mut config.strs {
-                    if req_strv.name == strv.name && strv.value != req_strv.value {
+            'outer: for req_val in request.config.bools {
+                for val in &mut config.bools {
+                    if req_val.name == val.name && val.value != req_val.value {
                         // TODO(lucasw) also need to clip to min max values
                         tracing::info!(
                             "set '{}' value '{}' to '{}'",
-                            strv.name,
-                            strv.value,
-                            req_strv.value
+                            val.name,
+                            val.value,
+                            req_val.value
                         );
-                        strv.value = req_strv.value;
+                        val.value = req_val.value;
                         break 'outer;
                     }
                 }
             }
+
+            'outer: for req_val in request.config.ints {
+                for val in &mut config.ints {
+                    if req_val.name == val.name && val.value != req_val.value {
+                        // TODO(lucasw) also need to clip to min max values
+                        tracing::info!(
+                            "set '{}' value '{}' to '{}'",
+                            val.name,
+                            val.value,
+                            req_val.value
+                        );
+                        // TODO(lucasw) clip to min/max
+                        val.value = req_val.value;
+                        break 'outer;
+                    }
+                }
+            }
+
+            'outer: for req_val in request.config.strs {
+                for val in &mut config.strs {
+                    if req_val.name == val.name && val.value != req_val.value {
+                        // TODO(lucasw) also need to clip to min max values
+                        tracing::info!(
+                            "set '{}' value '{}' to '{}'",
+                            val.name,
+                            val.value,
+                            req_val.value
+                        );
+                        val.value = req_val.value;
+                        break 'outer;
+                    }
+                }
+            }
+
+            'outer: for req_val in request.config.doubles {
+                for val in &mut config.doubles {
+                    if req_val.name == val.name && val.value != req_val.value {
+                        // TODO(lucasw) also need to clip to min max values
+                        tracing::info!(
+                            "set '{}' value '{}' to '{}'",
+                            val.name,
+                            val.value,
+                            req_val.value
+                        );
+                        // TODO(lucasw) clip to min/max
+                        val.value = req_val.value;
+                        break 'outer;
+                    }
+                }
+            }
+
             // this panics, also can't do regular send because that requires async
             // let rv = update_sender.blocking_send(true);
             // tracing::info!("update sender: {rv:?}");
@@ -172,6 +217,76 @@ impl DynamicReconfigure {
         Ok(dr)
     }
 
+    pub fn add_bool_param(&mut self, name: &str, value: bool, description: &str) {
+        let param = dynamic_reconfigure::BoolParameter {
+            name: name.to_string(),
+            value,
+        };
+        let min = dynamic_reconfigure::BoolParameter {
+            name: name.to_string(),
+            value: false,
+        };
+        let max = dynamic_reconfigure::BoolParameter {
+            name: name.to_string(),
+            value,
+        };
+
+        let param_description = dynamic_reconfigure::ParamDescription {
+            name: param.name.clone(),
+            r#type: "bool".to_string(),
+            level: 1,
+            description: description.to_string(),
+            edit_method: "".to_string(),
+        };
+
+        // TODO(lucasw) assume only one group, all that is supported currently
+        self.config_description.groups[0]
+            .parameters
+            .push(param_description);
+
+        // Don't need a max string but it's there anyhow, assume the min/max values don't matter
+        self.config_description.min.bools.push(min);
+        self.config_description.max.bools.push(max);
+        self.config_description.dflt.bools.push(param.clone());
+
+        self.config_state.lock().unwrap().bools.push(param);
+    }
+
+    pub fn add_int_param(&mut self, name: &str, value: i32, min: i32, max: i32, description: &str) {
+        let param = dynamic_reconfigure::IntParameter {
+            name: name.to_string(),
+            value,
+        };
+        let min = dynamic_reconfigure::IntParameter {
+            name: name.to_string(),
+            value: min,
+        };
+        let max = dynamic_reconfigure::IntParameter {
+            name: name.to_string(),
+            value: max,
+        };
+
+        let param_description = dynamic_reconfigure::ParamDescription {
+            name: param.name.clone(),
+            r#type: "int".to_string(),
+            level: 1,
+            description: description.to_string(),
+            edit_method: "".to_string(),
+        };
+
+        // TODO(lucasw) assume only one group, all that is supported currently
+        self.config_description.groups[0]
+            .parameters
+            .push(param_description);
+
+        // Don't need a max string but it's there anyhow, assume the min/max values don't matter
+        self.config_description.min.ints.push(min);
+        self.config_description.max.ints.push(max);
+        self.config_description.dflt.ints.push(param.clone());
+
+        self.config_state.lock().unwrap().ints.push(param);
+    }
+
     pub fn add_str_param(&mut self, name: &str, value: &str, description: &str) {
         let param = dynamic_reconfigure::StrParameter {
             name: name.to_string(),
@@ -197,6 +312,48 @@ impl DynamicReconfigure {
         self.config_description.dflt.strs.push(param.clone());
 
         self.config_state.lock().unwrap().strs.push(param);
+    }
+
+    pub fn add_double_param(
+        &mut self,
+        name: &str,
+        value: f64,
+        min: f64,
+        max: f64,
+        description: &str,
+    ) {
+        let param = dynamic_reconfigure::DoubleParameter {
+            name: name.to_string(),
+            value,
+        };
+        let min = dynamic_reconfigure::DoubleParameter {
+            name: name.to_string(),
+            value: min,
+        };
+        let max = dynamic_reconfigure::DoubleParameter {
+            name: name.to_string(),
+            value: max,
+        };
+
+        let param_description = dynamic_reconfigure::ParamDescription {
+            name: param.name.clone(),
+            r#type: "double".to_string(),
+            level: 1,
+            description: description.to_string(),
+            edit_method: "".to_string(),
+        };
+
+        // TODO(lucasw) assume only one group, all that is supported currently
+        self.config_description.groups[0]
+            .parameters
+            .push(param_description);
+
+        // Don't need a max string but it's there anyhow, assume the min/max values don't matter
+        self.config_description.min.doubles.push(min);
+        self.config_description.max.doubles.push(max);
+        self.config_description.dflt.doubles.push(param.clone());
+
+        self.config_state.lock().unwrap().doubles.push(param);
     }
 
     pub fn init(&self) {

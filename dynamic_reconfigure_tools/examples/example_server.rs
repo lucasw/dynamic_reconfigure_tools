@@ -23,8 +23,11 @@ async fn main() -> Result<(), anyhow::Error> {
     // Dynamic reconfigure service and topics
     let mut dr = dynamic_reconfigure_tools::DynamicReconfigure::new(&nh, &full_node_name).await?;
 
+    dr.add_bool_param("enable", false, "fake enable");
     dr.add_str_param("foo", "bar", "some string param");
+    dr.add_double_param("floating", 3.0, 0.0, 16.0, "a float");
     dr.add_str_param("another", "bar2", "another string param");
+    dr.add_int_param("int val", 50, -20, 200, "int param");
 
     tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
     dr.init();
