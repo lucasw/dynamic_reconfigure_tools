@@ -27,7 +27,7 @@ async fn main() -> Result<(), anyhow::Error> {
     dr.add_str_param("foo", "bar", "some string param");
     dr.add_double_param("floating", 3.0, 0.0, 16.0, "a float");
     dr.add_str_param("another", "bar2", "another string param");
-    dr.add_int_param("int val", 50, -20, 200, "int param");
+    dr.add_int_param("int_val", 50, -20, 200, "int param");
 
     let mut dr_enums = Vec::new();
     dr_enums.push(("foo", "somme foo"));
@@ -38,7 +38,7 @@ async fn main() -> Result<(), anyhow::Error> {
     tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
     dr.init();
 
-    let wait_millis = 100;
+    let wait_millis = 200;
     let mut update_interval =
         tokio::time::interval(tokio::time::Duration::from_millis(wait_millis));
 
@@ -51,7 +51,23 @@ async fn main() -> Result<(), anyhow::Error> {
             _ = update_interval.tick() => {
             //_ = dr.update_receiver.recv() => {
                 // let stamp = tf_util::stamp_now();
-                dr.update();
+                match dr.update() {
+                    Ok(true) => {
+                        let val = dr.get_str("foo");
+                        tracing::info!("foo '{val:?}'");
+                        // this will fail
+                        let val = dr.get_str("none_named_this");
+                        tracing::info!("nnt '{val:?}'");
+                        let val = dr.get_double("floating");
+                        tracing::info!("val '{val:?}'");
+                        let val = dr.get_int("int_val");
+                        tracing::info!("val '{val:?}'");
+                    }
+                    Ok(false) => {}
+                    Err(err) => {
+                        tracing::warn!("{err:?}");
+                    }
+                }
             }
         }
     }

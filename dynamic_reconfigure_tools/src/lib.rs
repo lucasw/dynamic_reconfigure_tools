@@ -407,7 +407,7 @@ impl DynamicReconfigure {
         let _ = self.description_pub.publish(&self.config_description);
     }
 
-    pub fn update(&self) {
+    pub fn update(&self) -> Result<bool, anyhow::Error> {
         let mut do_update_pub = self.do_update_pub.lock().unwrap();
         if *do_update_pub {
             *do_update_pub = false;
@@ -415,12 +415,77 @@ impl DynamicReconfigure {
                 Ok(config_state) => {
                     let _ = self.update_pub.publish(&config_state.clone());
                     // let _ = self.description_pub.publish(&config_description);
+                    return Ok(true);
                 }
                 Err(err) => {
-                    // TODO(lucasw) should return this
-                    tracing::warn!("{err:?}");
+                    return Err(anyhow::anyhow!("{err:?}"));
                 }
             }
         }
+        Ok(false)
+    }
+
+    pub fn get_int(&self, name: &str) -> Result<i32, anyhow::Error> {
+        match self.config_state.lock() {
+            Ok(config_state) => {
+                for param in &config_state.ints {
+                    if param.name == name {
+                        return Ok(param.value);
+                    }
+                }
+            }
+            Err(err) => {
+                return Err(anyhow::anyhow!("{err:?}"));
+            }
+        }
+        Err(anyhow::anyhow!("couldn't find {name}"))
+    }
+
+    pub fn get_double(&self, name: &str) -> Result<f64, anyhow::Error> {
+        match self.config_state.lock() {
+            Ok(config_state) => {
+                for param in &config_state.doubles {
+                    if param.name == name {
+                        return Ok(param.value);
+                    }
+                }
+            }
+            Err(err) => {
+                return Err(anyhow::anyhow!("{err:?}"));
+            }
+        }
+        Err(anyhow::anyhow!("couldn't find {name}"))
+    }
+
+    pub fn get_bool(&self, name: &str) -> Result<bool, anyhow::Error> {
+        match self.config_state.lock() {
+            Ok(config_state) => {
+                for param in &config_state.bools {
+                    if param.name == name {
+                        return Ok(param.value);
+                    }
+                }
+            }
+            Err(err) => {
+                return Err(anyhow::anyhow!("{err:?}"));
+            }
+        }
+        Err(anyhow::anyhow!("couldn't find {name}"))
+    }
+
+    pub fn get_str(&self, name: &str) -> Result<String, anyhow::Error> {
+        match self.config_state.lock() {
+            Ok(config_state) => {
+                for param in &config_state.strs {
+                    if param.name == name {
+                        return Ok(param.value.clone());
+                    }
+                }
+            }
+            Err(err) => {
+                return Err(anyhow::anyhow!("{err:?}"));
+            }
+        }
+        Err(anyhow::anyhow!("couldn't find {name}"))
     }
 }
