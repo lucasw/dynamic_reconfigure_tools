@@ -23,11 +23,11 @@ tracing-subscriber = "0.3.18"
 
 [dependencies.roslibrust]
 git = "https://github.com/lucasw/roslibrust"
-branch = "get_rx_msg_def"
+branch = "get_rx_msg_def_v0_12"
 # path = "../../roslibrust/roslibrust"
 # version="0.10.2"
 features = ["ros1"]
 
 [dependencies.roslibrust_util]
 git = "https://github.com/lucasw/tf_roslibrust"
-version = "0.1.0"
+version = "0.2.0"
