@@ -403,18 +403,19 @@ impl DynamicReconfigure {
         self.add_int_param_inner(name, value, 0, max, enum_description, edit_method);
     }
 
-    pub fn init(&self) {
-        let _ = self.description_pub.publish(&self.config_description);
+    pub async fn init(&self) -> Result<(), anyhow::Error> {
+        self.description_pub.publish(&self.config_description).await?;
+        Ok(())
     }
 
-    pub fn update(&self) -> Result<bool, anyhow::Error> {
+    pub async fn update(&self) -> Result<bool, anyhow::Error> {
         let mut do_update_pub = self.do_update_pub.lock().unwrap();
         if *do_update_pub {
             *do_update_pub = false;
             match self.config_state.lock() {
                 Ok(config_state) => {
-                    let _ = self.update_pub.publish(&config_state.clone());
-                    // let _ = self.description_pub.publish(&config_description);
+                    let _ = self.update_pub.publish(&config_state.clone()).await?;
+                    // let _ = self.description_pub.publish(&config_description).await;
                     return Ok(true);
                 }
                 Err(err) => {

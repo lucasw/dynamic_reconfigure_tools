@@ -36,7 +36,7 @@ async fn main() -> Result<(), anyhow::Error> {
     dr.add_enum_param("my enum", 1, dr_enums, "select amongst these");
 
     tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
-    dr.init();
+    dr.init().await?;
 
     let wait_millis = 200;
     let mut update_interval =
@@ -51,17 +51,17 @@ async fn main() -> Result<(), anyhow::Error> {
             _ = update_interval.tick() => {
             //_ = dr.update_receiver.recv() => {
                 // let stamp = tf_util::stamp_now();
-                match dr.update() {
+                match dr.update().await {
                     Ok(true) => {
                         let val = dr.get_str("foo");
-                        tracing::info!("foo '{val:?}'");
+                        tracing::info!("foo val: '{val:?}'");
                         // this will fail
                         let val = dr.get_str("none_named_this");
-                        tracing::info!("nnt '{val:?}'");
+                        tracing::info!("no value expected: '{val:?}'");
                         let val = dr.get_double("floating");
-                        tracing::info!("val '{val:?}'");
+                        tracing::info!("floating val: '{val:?}'");
                         let val = dr.get_int("int_val");
-                        tracing::info!("val '{val:?}'");
+                        tracing::info!("int val: '{val:?}'");
                     }
                     Ok(false) => {}
                     Err(err) => {
