@@ -122,7 +122,7 @@ impl DynamicReconfigure {
 
             // TODO(lucasw) need a hashmap as base structure so don't have to do double for loops
             // - then convert it to and from Config as needed
-            'outer: for req_val in request.config.bools {
+            for req_val in request.config.bools {
                 for val in &mut config.bools {
                     if req_val.name == val.name && val.value != req_val.value {
                         // TODO(lucasw) also need to clip to min max values
@@ -133,12 +133,12 @@ impl DynamicReconfigure {
                             req_val.value
                         );
                         val.value = req_val.value;
-                        break 'outer;
+                        break;
                     }
                 }
             }
 
-            'outer: for req_val in request.config.ints {
+            for req_val in request.config.ints {
                 for val in &mut config.ints {
                     if req_val.name == val.name && val.value != req_val.value {
                         // TODO(lucasw) also need to clip to min max values
@@ -150,12 +150,12 @@ impl DynamicReconfigure {
                         );
                         // TODO(lucasw) clip to min/max
                         val.value = req_val.value;
-                        break 'outer;
+                        break;
                     }
                 }
             }
 
-            'outer: for req_val in request.config.strs {
+            for req_val in request.config.strs {
                 for val in &mut config.strs {
                     if req_val.name == val.name && val.value != req_val.value {
                         // TODO(lucasw) also need to clip to min max values
@@ -166,12 +166,12 @@ impl DynamicReconfigure {
                             req_val.value
                         );
                         val.value = req_val.value;
-                        break 'outer;
+                        break;
                     }
                 }
             }
 
-            'outer: for req_val in request.config.doubles {
+            for req_val in request.config.doubles {
                 for val in &mut config.doubles {
                     if req_val.name == val.name && val.value != req_val.value {
                         // TODO(lucasw) also need to clip to min max values
@@ -183,7 +183,7 @@ impl DynamicReconfigure {
                         );
                         // TODO(lucasw) clip to min/max
                         val.value = req_val.value;
-                        break 'outer;
+                        break;
                     }
                 }
             }
